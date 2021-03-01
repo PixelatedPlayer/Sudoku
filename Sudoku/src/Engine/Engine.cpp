@@ -26,6 +26,7 @@ Engine::Engine(int width, int height, std::string name){
     }
     
     this->name = name;
+    SetConsoleTitle(name.c_str());
     
     // CONSTRUCT CONSOLE
     

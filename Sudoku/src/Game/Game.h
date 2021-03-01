@@ -7,7 +7,9 @@ private:
     Sudoku puzzle;
     int xSel=0, ySel=0;
     
-    void DrawValues();
+    void DrawBoard();
+    void DrawHints();
+    void Clear();
 public:
     Game(int width, int height) : Engine(width, height, "Sudoku") { }
 

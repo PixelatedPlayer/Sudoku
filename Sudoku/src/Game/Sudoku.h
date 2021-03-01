@@ -4,6 +4,7 @@ class Sudoku {
 private:
     bool hints[9][9][9] = {}; //x, y, n-hint; initialize to 0
     char board[9][9];
+    char solution[9][9];
 public:
     Sudoku(){
        for (int i = 0; i < 9; i++){
