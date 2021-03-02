@@ -3,19 +3,43 @@
 #include "Sudoku.h"
 
 /* TODO
- * we actually want 9x9 per sub board and 27x27 for major board, so we can show hints
+ * don't let user change the value of a starting value; maybe color starting values differently 
+ * mark error when entering a clearly incorrect (another in the same row/column/block exists)
+ * record times (categorized on high scores by difficulty)
+ * save/load game (and save time scores)
+ * Game options
+ *      always show notes/hints
+ *      toggle hints
+ *      disable color checkerboard
  * 
- *  
+ *      color customization?? 
+ * New Game/Restart/Quit
+ * Entering same value clears it
  */
 bool Game::Create() {
+    srand(NULL);
+    puzzle.createSudoku();
+    
     int i = 0;
     Frame board[9] = {Frame(11,11),Frame(11,11),Frame(11,11),Frame(11,11),Frame(11,11),Frame(11,11),Frame(11,11),Frame(11,11),Frame(11,11)};
     for (int x = 0; x < 3; x++){
         for (int y = 0; y < 3; y++){
-            board[i].DrawBorder('#');
+            board[i].DrawBorder(' ', BG_WHITE);
             DrawFrame(x*10, y*10, &board[i++]);
         }
     }
+    
+    //LEGEND
+//    legend = new Frame(30, 28);
+//    legend->DrawString(0,0,"WASD/Arrow Keys to move");
+//    legend->DrawString(0,1,"selection. Shift to view notes");
+//    legend->DrawString(0,2,"1-9 to write (0 clears)");
+//    legend->DrawString(0,3,"SHIFT + 1-9 to edit notes");
+//    legend->DrawString(0,4,"ESC to edit options");
+//    
+//    legend->DrawString(0,7,"GAME OPTIONS");
+//    legend->DrawString(0,8,"GAME OPTIONS");
+//    DrawFrame(40, 0, legend);
     DrawBoard();
     return true;
 }
@@ -47,8 +71,12 @@ bool Game::Update(int key, keyState state){
         }
         DrawHints();
     }
-    else
+    else{
+        if (key >= '0' && key <= '9' && state.pressed){ //we are modifying value
+            puzzle.Set(xSel, ySel, (key=='0'||key==puzzle.Get(xSel,ySel)?0:key-'0'));
+        }
         DrawBoard();
+    }
     
     return true;
 }
@@ -57,7 +85,7 @@ void Game::DrawBoard(){
     Clear();
     for (int x = 0; x < 9; x++){
         for (int y = 0; y < 9; y++){
-            SetBit(2+x*3+(x/3), 2+y*3+(y/3), (puzzle.Get(x,y) == ' '?'_':puzzle.Get(x,y)), (x==xSel && y==ySel?BG_GRAY:BG_BLACK) + FG_WHITE);
+            SetBit(2+x*3+(x/3), 2+y*3+(y/3), (puzzle.Get(x,y) == 0?'_':puzzle.Get(x,y) + '0'), (x==xSel && y==ySel?BG_GRAY:BG_BLACK) + FG_WHITE);
         }
     }
 }
@@ -74,8 +102,12 @@ void Game::DrawHints(){
     bool c = false;
     for (int x = 0; x < 9; x++){
         for (int y = 0; y < 9; y++){
-            for (int z = 0; z < 9; z++){
-                SetBit(1+x*3+(x/3)+ z%3, 1+y*3+(y/3) + z/3, puzzle.GetHint(x,y,z)?z+'1':'-', (x==xSel&&y==ySel?BG_WHITE + FG_BLACK:c?BG_DARK_GREEN+FG_WHITE:BG_DARK_BLUE+FG_WHITE));
+            if (puzzle.Get(x, y) != 0)
+                SetBit(2+x*3+(x/3), 2+y*3+(y/3), (puzzle.Get(x,y) == 0?'_':puzzle.Get(x,y)+'0'), (x==xSel && y==ySel?BG_GRAY:BG_BLACK) + FG_WHITE);
+            else{
+                for (int z = 0; z < 9; z++){
+                    SetBit(1+x*3+(x/3)+ z%3, 1+y*3+(y/3) + z/3, puzzle.GetHint(x,y,z)?z+'1':' ', (x==xSel&&y==ySel?BG_WHITE + FG_BLACK:c?BG_DARK_GREEN+FG_WHITE:BG_DARK_BLUE+FG_WHITE));
+                }
             }
             c = !c;
         }

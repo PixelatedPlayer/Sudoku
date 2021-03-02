@@ -4,8 +4,15 @@
 
 class Game : public Engine {
 private:
-    Sudoku puzzle;
-    int xSel=0, ySel=0;
+    SudokuPuzzle puzzle;
+    Frame* legend;
+    
+    int xSel=0, ySel=0, lSel=0;
+    //user customizations
+    bool checkerboard = true;
+    bool hintToggles = true;
+    bool alwaysHints = false;
+    
     
     void DrawBoard();
     void DrawHints();
