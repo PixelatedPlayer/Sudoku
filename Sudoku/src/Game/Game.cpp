@@ -89,8 +89,8 @@ bool Game::Update(int key, keyState state){
                     int ty = 2+obstructions[i].y*3+(obstructions[i].y/3);
                     SetBit(tx, ty, GetBit(tx,ty).glyph, BG_RED + FG_BLACK);
                 }
+                if (obstructions.size() > 0) return true;
             }
-            return true;
             puzzle.Set(xSel, ySel, (key=='0'||key==puzzle.Get(xSel,ySel)?0:key-'0'));
         }
     }
