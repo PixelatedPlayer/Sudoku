@@ -1,5 +1,5 @@
 #pragma once
-
+#define REAL_TIME
 #include <Windows.h>
 #include "Graphics/Frame.h"
 
@@ -52,7 +52,8 @@ public:
 #ifdef REAL_TIME
     virtual bool Update(float deltaTime) = 0;
     virtual void HandleInput(int key, keyState state) { }
-#else
+#endif
+#ifndef REAL_TIME
     virtual bool Update(int key, keyState state) = 0;
 #endif
     virtual void Destroy() { destroyed = true; } //similar to destructor - free memory from implementation variables

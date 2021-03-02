@@ -1,11 +1,11 @@
-#ifdef REAL_TIME
-#include <chrono>
-#endif
 
 #include <cstdio>
 
 #include "Engine.h"
 #include "Log.h"
+#ifdef REAL_TIME
+#include <chrono>
+#endif
 
 bool Engine::destroyed = false;
 bool Engine::running = true;

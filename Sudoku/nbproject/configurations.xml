@@ -59,6 +59,9 @@
           <incDir>
             <pElem>src</pElem>
           </incDir>
+          <preprocessorList>
+            <Elem>REAL_TIME</Elem>
+          </preprocessorList>
         </cTool>
         <ccTool>
           <standard>11</standard>
@@ -104,6 +107,9 @@
           <incDir>
             <pElem>src</pElem>
           </incDir>
+          <preprocessorList>
+            <Elem>REAL_TIME</Elem>
+          </preprocessorList>
         </cTool>
         <ccTool>
           <developmentMode>5</developmentMode>
