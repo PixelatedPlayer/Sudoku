@@ -23,6 +23,7 @@ public: // Should every variable and method be public? Probably not. Is that goi
     int sudokuSolved[81] = {}; // Complete sudoku with every square filled
     int sudokuUser[81] = {}; // The sudoku the user sees, with the numbers in certain squares removed
     
+    bool sudokuStarting[81] = {};
     // INTERACTIONS
     bool notes[81][9] = {}; // User entered notes
     int Get(int x, int y){
@@ -33,7 +34,41 @@ public: // Should every variable and method be public? Probably not. Is that goi
     }
     void Set(int x, int y, int v) { sudokuUser[x+y*9] = v; }
     void SetHint(int x, int y, int z, bool v) { notes[x+y*9][z] = v; }
+    bool IsStarting(int x, int y){
+        return sudokuStarting[x + y * 9];
+    }
     
+    struct coord{
+        coord(int x, int y) : x(x), y(y) {}
+        int x, y;
+    };
+    
+    vector<coord> MarkErrors(int x, int y, int v){
+        vector<coord> obstructions;
+        //Check rows
+        for(int r=0; r<9;r++) {
+            if (r!=y&&sudokuUser[x+r*9]==v)
+              obstructions.push_back(coord(x,r));
+            }
+        //Check columns
+        for(int c=0;c<9;c++){
+            if(c!=x&&sudokuUser[c+y*9]==v)
+              obstructions.push_back(coord(c,y));
+        }
+        
+        //Check block
+        int startX = (x/3)*3;
+        int startY = (y/3)*3;
+        for (int xx = 0; xx < 3; xx++){
+            for (int yy = 0; yy < 3; yy++){
+                int tx = startX+xx;
+                int ty = startY+yy;
+                if ((tx!=x||ty!=y)&&sudokuUser[tx+ty*9]==v)
+                    obstructions.push_back(coord(tx,ty));
+            }
+        }
+        return obstructions;
+    }
     
     void printPuzzle() {
         // Prints sudokuUser as a 9x9 character printout, like this:
@@ -215,58 +250,8 @@ public: // Should every variable and method be public? Probably not. Is that goi
         for (int i = 0; i < 81; i++) sudokuUser[i] = sudokuSolved[i];
         
         removeSquares();
+        
+        for (int i = 0; i < 81; i++)
+            sudokuStarting[i] = sudokuUser[i] != 0;
     }
 };
-
-//int main() {
-//    clock_t t, cur, maxT;
-//    int iterations = 1;
-//    
-//    SudokuPuzzle sud;
-//    //srand(69420);
-//    srand(time(NULL));
-//    
-//    t = clock();
-//    cur = t;
-//    maxT = t;
-//    for (int n = 0; n < iterations; n++) {
-//        //for (int i = 0; i < 81; i++) sudoku[i] = 0;
-//        //createSudoku(sudoku);
-//        sud.createSudoku();
-//        maxT = max(maxT, clock() - cur);
-//        cur = clock();
-//    }
-//    t = clock() -  t;
-//    sud.printPuzzle();
-//    cout << "Time elapsed: " << ((float)t)/CLOCKS_PER_SEC/iterations*1000 << " ms\n";
-//    cout << "Max time: " << ((float)maxT)/CLOCKS_PER_SEC*1000 << " ms\n";
-//    // On average, creating a solved sudoku takes ~0.3187 ms to execute. Not bad.
-//    // The entire createSudoku function takes more like 35 ms, and that's with the function nerfed so it doesn't check everything.
-//    // Worst case so far has been 1700 ms :/
-//    return 0;
-//}
-
-//class Sudoku {
-//private:
-//    bool hints[9][9][9] = {}; //x, y, n-hint; initialize to 0
-//    char board[9][9];
-//    char solution[9][9];
-//public:
-//    Sudoku(){
-//       for (int i = 0; i < 9; i++){
-//           for (int j = 0; j < 9; j++){
-//               board[i][j] = ' ';
-//           }
-//       } 
-//    }
-//    bool GetHint(int x, int y, int z){
-//        return hints[x][y][z];
-//    }
-//    
-//    char Get(int x, int y){
-//        return board[x][y];
-//    }
-//    
-//    void Set(int x, int y, char v) { board[x][y] = v; }
-//    void SetHint(int x, int y, int z, bool v) { hints[x][y][z] = v; }
-//};

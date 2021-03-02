@@ -3,6 +3,10 @@
 Frame::Frame(int width, int height) : width(width), height(height) {
     glyphs = new char[width * height];
     colors = new char[width * height];
+    for (int i = 0; i < width * height; i++){
+        glyphs[i] = 0;
+        colors[i] = 0;
+    }
 }
 
 void Frame::SetBit(int x, int y, char glyph, char col, bool transparent) {
@@ -47,12 +51,12 @@ void Frame::DrawString(int x, int y, std::string str, char col, bool transparent
             return;
 
     for (unsigned int i = 0; i < str.size(); i++) {
-		SetBit(x + i, y, str[i], col, transparent);
+        SetBit(x + i, y, str[i], col, transparent);
     }
 }
 
 void Frame::DrawBorder(char glyph, char col) {
-    DrawRect(0, 1, width, height, glyph, col);
+    DrawRect(0, 0, width, height, glyph, col, false);
 }
 
 void Frame::DrawFrame(int x, int y, Frame* frame) {
@@ -61,19 +65,20 @@ void Frame::DrawFrame(int x, int y, Frame* frame) {
 
     for (int i = 0; i < frame->width; i++) {
         for (int j = 0; j < frame->height; j++) {
-			SetBit(x + i, y + j, frame->GetGlyph(i, j), frame->GetColor(i, j));
+            SetBit(x + i, y + j, frame->GetGlyph(i, j), frame->GetColor(i, j));
         }
     }
 }
 
 void Frame::DrawRect(int x, int y, int w, int h, char glyph, char col, bool transparent){
-    for (int xx = x; xx < w; xx++) {
+    for (int xx = x; xx < w + x; xx++) {
         SetBit(xx, 0, glyph, col);
         SetBit(xx, h - 1, glyph, col, transparent);
     }
 
-    for (int yy = y; yy < h - 1; yy++) {
-		SetBit(0, yy, glyph , col);
+    //verticals
+    for (int yy = y; yy < h + y; yy++) {
+        SetBit(0, yy, glyph , col);
         SetBit(w - 1, yy, glyph, col, transparent);
     }
 }

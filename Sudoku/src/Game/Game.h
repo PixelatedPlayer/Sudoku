@@ -9,9 +9,10 @@ private:
     
     int xSel=0, ySel=0, lSel=0;
     //user customizations
-    bool checkerboard = true;
+    bool checkerboard = true; //not functional
     bool hintToggles = true;
-    bool alwaysHints = false;
+    bool hintOn = false; //only used when hintToggles is true
+    bool alwaysHints = false; //not functional
     
     
     void DrawBoard();

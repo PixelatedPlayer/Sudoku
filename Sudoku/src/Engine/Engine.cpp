@@ -180,6 +180,8 @@ void Engine::Start() {
 #endif
     
     while (running) {
+        if (GetForegroundWindow() != GetConsoleWindow())
+            continue;
 #ifdef REAL_TIME
         //DETERMINE TIMING
         tp2 = std::chrono::system_clock::now();
