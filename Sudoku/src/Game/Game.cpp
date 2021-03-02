@@ -17,7 +17,7 @@
  * Entering same value clears it
  */
 bool Game::Create() {
-    srand(NULL);
+    srand(time(NULL));
     puzzle.createSudoku();
     
     Frame board = Frame(11,11);
