@@ -381,7 +381,7 @@ public: // Should every variable and method be public? Probably not. Is that goi
         //int totalAttempts = 0;
         int attempts = 0;
         int successfulRemoves = 0;
-        int goalRemoves = 29; //true removals is double this (-1 if the center was removed, bc it's mirror is itself) TODO increase this as the AI improves
+        int goalRemoves = 27; //true removals is double this (-1 if the center was removed, bc it's mirror is itself) TODO increase this as the AI improves
         vector<int> squares;
         for (int i = 0; i < 81; i++) squares.push_back(i);
         random_shuffle(squares.begin(), squares.end());
