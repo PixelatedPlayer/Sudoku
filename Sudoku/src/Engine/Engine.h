@@ -30,8 +30,6 @@ private:
     static bool running;
 
     keyState keys[256];
-
-    static BOOL OnClose(DWORD dword);
 public:
     Engine(int width, int height, std::string name); //construct the console and initialize engine variables
 

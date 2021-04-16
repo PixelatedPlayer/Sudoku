@@ -20,29 +20,83 @@ using namespace std; // editor's note: don't do this
 
 class SudokuPuzzle {
 private:
-    bool AISolve(int startingPuzzle[81]){
-        //puzzle is copied, not reference so we can modify to solve and return false if we cant
+    //Solve the puzzle - used to ensure generated puzzles are solvable
+    bool AISolve(int startingPuzzle[81]){        
         bool notes[81][9];
         int puzzle[81];
         for (int i = 0; i < 81; i++){
             puzzle[i] = startingPuzzle[i];
         }
+        Log aiDebug;
         FillNotes(puzzle, notes);
         hint hint = RequestHint(puzzle, notes);
         while (hint.type != ERR){
             //perform hint on puzzle
             switch(hint.type){
                 case mark:
+                {
+                    aiDebug.Info("Marking at [%d,%d] with value %d", hint.x, hint.y, hint.z);
+                    //mark location
                     puzzle[hint.x + hint.y*9] = hint.z+1;
-                    FillNotes(puzzle, notes); //TODO this scans the whole puzzle when we only need to scan where we marked
+                    //remove marked value from notes in each of it's houses
+                    for (int x = 0; x < 9; x++){
+                        notes[x + hint.y *9][hint.z] = false;
+                    }
+                    for (int y = 0; y < 9; y++){
+                        notes[hint.x +y*9][hint.z] = false;
+                    }
+                    int blockX = hint.x / 3;
+                    int blockY = hint.y / 3;
+                    for (int x = 0; x < 3; x++){
+                        for (int y = 0; y < 3; y++){
+                            notes[(blockX * 3 + x) + (blockY * 3 + y)*9][hint.z] = false;
+                        }
+                    }
+                }
+                    break;
+                case pair:
+                    //remove all other notes from the house of the pair
+                    switch (hint.h){
+                        case row:
+                            aiDebug.Info("Pair found, removing notes %d and %d from ROW %d", hint.y, hint.z, hint.x);
+                            for (int x = 0; x < 9; x++){
+                                if (x == hint.i || x == hint.j) continue;
+                                notes[x + hint.x * 9][hint.y] = false;
+                                notes[x + hint.x * 9][hint.z] = false;
+                            }
+                            break;
+                        case col:
+                            aiDebug.Info("Pair found, removing notes %d and %d from COL %d", hint.y, hint.z, hint.x);
+                            for (int y = 0; y < 9; y++){
+                                if (y == hint.i || y == hint.j) continue;
+                                notes[hint.x + y * 9][hint.y] = false;
+                                notes[hint.x + y * 9][hint.z] = false;
+                            }
+                            break;
+                        case block:
+                            aiDebug.Info("Pair found, removing notes %d and %d from BLOCK %d", hint.y, hint.z, hint.x);
+                            int blockX = hint.x % 3;
+                            int blockY = hint.x / 3;
+                            for (int x = 0; x < 3; x++){
+                                for (int y = 0; y < 3; y++){
+                                    if (y*3+x == hint.i || y*3+x == hint.j) continue;
+                                    notes[(blockX*3+x) + (blockY * 3 + y)*9][hint.y] = false;
+                                    notes[(blockX*3+x) + (blockY * 3 + y)*9][hint.z] = false;
+                                }
+                            }
+                            break;
+                    }
                     break;
             }
             
-            if (IsComplete(puzzle))
+            if (IsComplete(puzzle)){
+                aiDebug.ToFile("aiDebug.txt");
                 return true;
+            }
 
             hint = RequestHint(puzzle, notes);
         }
+        aiDebug.ToFile("aiDebug.txt");
         return false;
     }
     
@@ -52,8 +106,8 @@ public: // Should every variable and method be public? Probably not. Is that goi
     
     int sudokuSolved[81] = {}; // Complete sudoku with every square filled
     int sudokuUser[81] = {}; // The sudoku the user sees, with the numbers in certain squares removed
-    
     bool sudokuStarting[81] = {};
+    
     // INTERACTIONS
     bool notes[81][9] = {}; // User entered notes
     bool aiNotes[81][9] = {};
@@ -71,19 +125,51 @@ public: // Should every variable and method be public? Probably not. Is that goi
     
     struct coord{
         coord(int x, int y) : x(x), y(y) {}
+        coord() : x(0), y(0) {}
         int x, y;
     };
 
     enum hintType{
         mark, //mark x,y with z
-        remove, //remove hint z at x,y
+        pair, //remove hints y, z, from the house type at x, except for those who have only those two (i, j)
+        //that is, at house type h: index x, mark indices i,j as only options for notes y,z: remove y,z as notes from all others in that house
         ERR
     };
+    
+    enum house{
+        row,
+        col,
+        block
+    };
+    
+    coord GetCoordFromHouseIndex(house house, int i, int j){
+        coord c;
+        switch (house){
+            case row:
+                c.y = i;
+                c.x = j;
+                break;
+            case col:
+                c.x = i;
+                c.y = j;
+                break;
+            case block: //TODO test this
+                c.x = (i % 3) * 3 + j % 3;
+                c.y = (i / 3) * 3 + j / 3;
+                break;
+        }
+        
+        return c;
+    }
+    
     struct hint{
         hint(int x, int y, int z, hintType type) : x(x), y(y), z(z), type(type) {}
         hint(int i, int z, hintType type): x(GetXFromI(i)), y(GetYFromI(i)), z(z), type(type) {}
-        hint(): x(-1), y(-1), z(-1), type(ERR) {}
-        int x, y, z;
+        hint(): x(0), y(0), z(0), type(ERR) {}
+        
+        int x, y, z; //x, y are locations, z is note location where applicable (by type)
+        int i, j, k = 0; //extra info for some hint types (pair: i, j index in house)
+        house h = row; //house for hint: 0==row,1==col,2==block
         hintType type;
     };
     
@@ -122,11 +208,13 @@ public: // Should every variable and method be public? Probably not. Is that goi
         return obstructions;
     }
     
+    //Request hint from this puzzle
     hint RequestHint(){
         return RequestHint(sudokuUser, notes);
     }
     
-    hint RequestHint(int puzzle[81], bool notes[81][9]){
+    //Request hint from provided puzzle
+    static hint RequestHint(int puzzle[81], bool notes[81][9]){
         //SCAN SINGLE NOTES - entry with only one note
         for (int i = 0; i < 81; i++){
             if (puzzle[i] != 0) continue;
@@ -175,7 +263,7 @@ public: // Should every variable and method be public? Probably not. Is that goi
             }
         }
         //scan each block
-        for (int x = 0; x < 3; x++)
+        for (int x = 0; x < 3; x++) {
             for (int y = 0; y < 3; y++){
                 for (int n = 0; n < 9; n++){
                     int num = 0;
@@ -193,19 +281,183 @@ public: // Should every variable and method be public? Probably not. Is that goi
                             }
                         }
                     }
-                    if (num == 1)
+                    if (num == 1){
                         return hint(ix, iy, n, mark);
+                    }
                 }
             }
+        }
+    
+        //SCAN NAKED PAIRS - can't combine with above bc x,n,y vs x,y,n
+        //we don't want to return a naked pair if it's already been done. so confirm that the house the naked pair is in contains at least one more of the note before returning hint
+        {
+            //scan each row
+            vector<hint> twoNotes;
+            for (int y = 0; y < 9; y++){
+                for (int x = 0; x < 9; x++){
+                    if (puzzle[x + y*9] != 0) continue;
+                    int num = 0; //number of notes on [x,y]
+                    int n1 = 0; //value of first note
+                    int n2 = 0; //value of second note
+                    for (int n = 0; n < 9; n++){
+                        if(notes[x + y*9][n]){
+                            if (num == 0)
+                                n1 = n;
+                            else
+                                n2 = n;
+                            num++;
+                        }
+                    }
+                    if (num == 2) //PAIR
+                        twoNotes.push_back(hint(x,n1,n2,ERR)); //save note data in hint: x==index in house (row, so actually x), y==first note value, z==second note value
+                }
+                if (twoNotes.size() >= 2){
+                    //check if any are the same
+                    for (int i = 0; i < twoNotes.size(); i++){
+                        for (int j = 0; j < twoNotes.size(); j++){
+                            if (i == j) continue; //dont compare pairs at same location
+                            if (twoNotes[i].y == twoNotes[j].y && twoNotes[i].z == twoNotes[j].z) { //same two notes
+                                //check that another note of this type exists in the row
+                                int numN1 = 0;
+                                int numN2 = 0;
+                                for (int x = 0; x < 9; x++){
+                                    if(notes[x + y * 9][twoNotes[i].y])
+                                        numN1++;
+                                    if (notes[x + y * 9][twoNotes[i].z])
+                                        numN2++;
+                                }
+                                if (numN1 > 2 || numN2 > 2){
+                                    hint h(y, twoNotes[i].y, twoNotes[i].z, pair);
+                                    h.i = twoNotes[i].x;
+                                    h.j = twoNotes[j].x;
+                                    h.h = row;
+                                    return h;
+                                }
+                            }
+                        }
+                    }
+                }
+                twoNotes.clear();
+            }
+
+            //scan each col
+            for (int x = 0; x < 9; x++){
+                for (int y = 0; y < 9; y++){
+                    if (puzzle[x + y*9] != 0) continue;
+                    int num = 0; //number of notes on [x,y]
+                    int n1 = 0; //value of first note
+                    int n2 = 0; //value of second note
+                    for (int n = 0; n < 9; n++){
+                        if(notes[x + y*9][n]){
+                            if (num == 0)
+                                n1 = n;
+                            else
+                                n2 = n;
+                            num++;
+                        }
+                    }
+                    if (num == 2) //PAIR
+                        twoNotes.push_back(hint(y,n1,n2,ERR)); //save note data in hint: x==index in house (row, so actually x), y==first note value, z==second note value
+                }
+                if (twoNotes.size() >= 2){
+                    //check if any are the same
+                    for (int i = 0; i < twoNotes.size(); i++){
+                        for (int j = 0; j < twoNotes.size(); j++){
+                            if (i == j) continue; //dont compare pairs at same location
+                            if (twoNotes[i].y == twoNotes[j].y && twoNotes[i].z == twoNotes[j].z) { //same two notes
+                                //check that another note of this type exists in the row
+                                int numN1 = 0;
+                                int numN2 = 0;
+                                for (int y = 0; y < 9; y++){
+                                    if(notes[x + y * 9][twoNotes[i].y])
+                                        numN1++;
+                                    if (notes[x + y * 9][twoNotes[i].z])
+                                        numN2++;
+                                }
+                                if (numN1 > 2 || numN2 > 2){
+                                    hint h(x, twoNotes[i].y, twoNotes[i].z, pair);
+                                    h.i = twoNotes[i].x;
+                                    h.j = twoNotes[j].x;
+                                    h.h = col;
+                                    return h;
+                                }
+                            }
+                        }
+                    }
+                }
+                twoNotes.clear();
+            }
+            
+            //scan each block
+            for (int x = 0; x < 3; x++) {
+                for (int y = 0; y < 3; y++){
+                    for (int yy = 0; yy < 3; yy++){
+                        for (int xx = 0; xx < 3; xx++){
+                            int trueX = x*3+xx;
+                            int trueY = y*3+yy;
+                            if (puzzle[trueX + trueY*9] != 0) continue;
+                            int num = 0; //number of notes on [trueX, trueY]
+                            int n1 = 0; //value of first note
+                            int n2 = 0; //value of second note
+                            for (int n = 0; n < 9; n++){
+                                if (notes[trueX + trueY*9][n]){
+                                    if (num == 0)
+                                        n1 = n;
+                                    else
+                                        n2 = n;
+                                    num++;
+                                }
+                            }
+                            if (num == 2) //PAIR
+                                twoNotes.push_back(hint(yy*3+xx, n1, n2, ERR));
+                        }
+                    }
+                    if (twoNotes.size() >= 2){
+                        //check if any are the same
+                        for (int i = 0; i < twoNotes.size(); i++){
+                            for (int j = 0; j < twoNotes.size(); j++){
+                                if (i == j) continue; //dont compare pairs at same location
+                                if (twoNotes[i].y == twoNotes[j].y && twoNotes[i].z == twoNotes[j].z) {
+                                    //check that another note of this type exists in the row
+                                    int numN1 = 0;
+                                    int numN2 = 0;
+                                    for (int xx = 0; xx < 3; xx++){
+                                        for (int yy = 0; yy < 3; yy++){
+                                            if(notes[(x*3+xx) + (y*3+yy) * 9][twoNotes[i].y])
+                                                numN1++;
+                                            if (notes[(x*3+xx) + (y*3+yy) * 9][twoNotes[i].z])
+                                                numN2++;
+                                        }
+                                    }
+                                    if (numN1 > 2 || numN2 > 2){
+                                        hint h(y*3+x, twoNotes[i].y, twoNotes[i].z, pair);
+                                        h.i = twoNotes[i].x;
+                                        h.j = twoNotes[j].x;
+                                        h.h = block;
+                                        return h;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    twoNotes.clear();
+                }
+            }
+        }
         
-        return hint();
+       
+        
+        
+        return hint(); //return empty hit means we got nothing
     }
     
+    //Fill this puzzles notes
     void FillNotes(){
         FillNotes(sudokuUser, notes);
     }
     
-    void FillNotes(int (&puzzle)[81], bool (&notes)[81][9]){
+    //Fill provided puzzle notes
+    static void FillNotes(int (&puzzle)[81], bool (&notes)[81][9]){
         //start by filling them, and we'll remove from there
         for (int i = 0; i < 81; i++){
             for (int j = 0; j < 9; j++)
@@ -378,26 +630,28 @@ public: // Should every variable and method be public? Probably not. Is that goi
         //Remove all possible squares while maintaining unique solution
         //To generate a minimal sudoku puzzle
         
-        //int totalAttempts = 0;
-        int attempts = 0;
+        int totalAttempts = 0;
+        int attempts = 0; //number of
+        int attemptMax = 15; //number of attempts at backstepping before we give up and try a new puzzle
+        //TODO optimize this number ^
         int successfulRemoves = 0;
-        int goalRemoves = 27; //true removals is double this (-1 if the center was removed, bc it's mirror is itself) TODO increase this as the AI improves
+        int goalRemoves = 60; //TODO increase this as the AI improves
         vector<int> squares;
         for (int i = 0; i < 81; i++) squares.push_back(i);
         random_shuffle(squares.begin(), squares.end());
 
         int iteration = 0;
-        while (iteration < 81) {
+        while (iteration < 81 && attempts < attemptMax) {
             //cout << "sanity check\n";
             int i = squares[iteration++];
-            int mirror = 80-i;
+            //int mirror = 80-i;
             // Remove the randomly selected square
             int n = sudokuUser[i];
-            int o = sudokuUser[mirror];
+            //int o = sudokuUser[mirror];
             if (n == 0) //we already removed from here
                 continue;
             sudokuUser[i] = 0;
-            sudokuUser[mirror]=0;
+            //sudokuUser[mirror]=0;
 
             // If square is necessary for a unique solution, fill the number back in.
             //cout << "Num Solutions:" << numSolutions(sudoku, 1000000, 0) << '\n';
@@ -413,14 +667,14 @@ public: // Should every variable and method be public? Probably not. Is that goi
             //break;
             if (!AISolve(sudokuUser)){
                 sudokuUser[i] = n;
-                sudokuUser[mirror] = o;
+               // sudokuUser[mirror] = o;
                 attempts++;
-                //totalAttempts++;
+                totalAttempts++;
             } else {
-                //attempts = 0;
+                attempts = 0;
                 successfulRemoves++;
                 if (successfulRemoves == goalRemoves){
-                    Log::Debug.Info("Puzzle removal completed, total backsteps: %d", attempts);
+                    Log::Debug.Info("Puzzle removal completed, total backsteps: %d", totalAttempts);
                     return true;
                 }
             }

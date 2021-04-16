@@ -93,17 +93,6 @@ Engine::Engine(int width, int height, std::string name){
     GetConsoleCursorInfo(console, &cursor);
     cursor.bVisible = false;
     SetConsoleCursorInfo(console, &cursor);
-    
-    //ctrl handler (necessary to override close functionality)
-    SetConsoleCtrlHandler((PHANDLER_ROUTINE)OnClose, TRUE);
-}
-
-BOOL Engine::OnClose(DWORD dword) {
-    if (dword == CTRL_CLOSE_EVENT) {
-        running = false;
-        //while (!destroyed); //closing is almost multithreaded so this makes us wait until it's done
-    }
-    return true;
 }
 
 void Engine::SetBit(int x, int y, char glyph, char col, bool transparent) {

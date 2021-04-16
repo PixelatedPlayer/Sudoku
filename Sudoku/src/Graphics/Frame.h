@@ -13,8 +13,6 @@ private:
     char* colors;
 
 public:
-    //handleinput from world/player, ui, battle, etc.
-    //	when a key is CHANGED, it sends THAT key to handleInput, instead of handleinput checking each key - makes more sense with bool
     Frame(int width, int height);
 
     int GetWidth() { return width; }

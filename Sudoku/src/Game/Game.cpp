@@ -3,13 +3,18 @@
 #include "Sudoku.h"
 
 /* TODO
+ * comments
+ * convert to MVC
  * record times (categorized on high scores by difficulty)
  * save/load game (and save time scores)
 
  * New Game/Restart/Quit
  */
+
+
 bool Game::Create() {
     srand(time(NULL));
+    DrawString(0,0, "Generating Puzzle...");
     puzzle.createSudoku();
     
     Frame board = Frame(11,11);
@@ -31,7 +36,7 @@ bool Game::Create() {
     
     legend->DrawString(0,9,"GAME OPTIONS");
     
-    debug = new Frame(50, 10);
+    debug = new Frame(100, 7);
     
     DrawMenu();
     DrawBoard();
@@ -41,7 +46,7 @@ bool Game::Create() {
 void Game::HandleInput(int key, keyState state){
     if (state.held && !state.pressed && !state.released) return;
     
-    //board[i], where i is the index in series. so i=3 is row 1 column 2 (out of 3,3, 0 exclusive)
+    //SELECTION MOVEMENT
     if (boardSelection && (key == VK_RIGHT || key == 'D') && state.pressed){
         xSel++;
         if (xSel > 8)
@@ -76,11 +81,14 @@ void Game::HandleInput(int key, keyState state){
         }
     } 
     
+    //ESCAPE: toggle menu
     if (key == VK_ESCAPE && state.pressed){
         boardSelection = !boardSelection;
         hintToggle = false;
         DrawMenu();
     }
+    
+    //ENTER/SPACE: Menu toggles
     if (!boardSelection && (key == VK_RETURN || key == VK_SPACE) && state.pressed){
         //toggle mSel
         switch(mSel){
@@ -95,8 +103,24 @@ void Game::HandleInput(int key, keyState state){
                 invertNotes = !invertNotes;
                 break;
             case 3:
+            {
                 hint = puzzle.RequestHint();
+                string hType;
+                switch (hint.type){
+                    case SudokuPuzzle::mark:
+                        hType = "Single";
+                        break;
+                    case SudokuPuzzle::pair:
+                        hType = "Pair";
+                        break;
+                    case SudokuPuzzle::ERR:
+                        hType = "ERR";
+                        break;
+                }
+                
+                Log::Debug.Info("Type: %s | x: %d, y: %d, z: %d, h: %d, i: %d, j: %d", hType.c_str(), hint.x, hint.y, hint.z, hint.h, hint.i, hint.j, hint.k);
                 hintToggle = true;
+            }
                 break;
             case 4: //fill notes
                 puzzle.FillNotes();
@@ -105,6 +129,7 @@ void Game::HandleInput(int key, keyState state){
         DrawMenu();
     }
     
+    //SHIFT: Show notes
     if (key == VK_SHIFT && state.pressed) {
         if (noteToggles) notesOn = !notesOn;
         else notesOn = true;
@@ -112,6 +137,7 @@ void Game::HandleInput(int key, keyState state){
         notesOn = false;
         
     
+    //0-9: Set note or value
     if (key >= '0' && key <= '9' && !puzzle.IsStarting(xSel, ySel)){ //we are modifying note
         if (notesOn){
             if (key == '0'){ //clear note
@@ -134,7 +160,8 @@ void Game::HandleInput(int key, keyState state){
         }
     }
     
-    if (notesOn){ // || GetKey(VK_SHIFT).held
+    //DETERMINE DRAW - we do this in HandleInput instead of Update to save a lot of draw cycles (drawing to Console is pretty expensive, and we only need to change these drawings in reaction to user input
+    if (notesOn){
         DrawNotes();
     } else
         DrawBoard();
@@ -143,9 +170,10 @@ void Game::HandleInput(int key, keyState state){
 }
 
 bool Game::Update(float deltaTime){
-    if (boardSelection)
+    if (boardSelection) //don't increment time if we're paused //TODO if we keep this, we should hide the board while in the menu. Otherwise, we could pause to figure out the puzzle and play and enter it to cheat time record
         totalTime += deltaTime;
         
+    //Draw time
     char s[16];
     snprintf(s, 16, "Time: %.0f s", totalTime);
     DrawString(40,0,s);
@@ -177,6 +205,7 @@ void Game::DrawMenu(){
 }
 
 void Game::Clear(){
+    //Fill in the board, between borders, with empty space (BG_BLACK ' ')
     for (int x = 0; x < 3; x++){
         for (int y = 0; y < 3; y++){
             Fill(1+x*10, 1+y*10,10+x*10,10+y*10, ' ', BG_BLACK);
@@ -205,12 +234,34 @@ void Game::DrawHints(SudokuPuzzle::hint hint){
         case SudokuPuzzle::mark:
             SetBit(1+hint.x*3+(hint.x/3)+ hint.z%3, 1+hint.y*3+(hint.y/3) + hint.z/3, hint.z+'1', BG_GREEN + FG_BLACK);
             break;
-        case SudokuPuzzle::ERR:
+        case SudokuPuzzle::pair:
+        {
+            //x and y for pair locations, set both hints hint.y, hint.z green
+            
+            SudokuPuzzle::coord c1 = puzzle.GetCoordFromHouseIndex(hint.h, hint.x, hint.i);
+            SudokuPuzzle::coord c2 = puzzle.GetCoordFromHouseIndex(hint.h, hint.x, hint.j);
+            int h1 = hint.y;
+            int h2 = hint.z;
+            
+            int x1 = c1.x;
+            int y1 = c1.y;
+            int x2 = c2.x;
+            int y2 = c2.y;
+            
+            SetBit(1 + x1 * 3 + (x1 / 3) + h1 % 3, 1 + y1 * 3 + (y1 / 3) + h1 / 3, h1 + '1', BG_GREEN + FG_BLACK);
+            SetBit(1 + x1 * 3 + (x1 / 3) + h2 % 3, 1 + y1 * 3 + (y1 / 3) + h2 / 3, h2 + '1', BG_GREEN + FG_BLACK);
+            SetBit(1 + x2 * 3 + (x2 / 3) + h1 % 3, 1 + y2 * 3 + (y2 / 3) + h1 / 3, h1 + '1', BG_GREEN + FG_BLACK);
+            SetBit(1 + x2 * 3 + (x2 / 3) + h2 % 3, 1 + y2 * 3 + (y2 / 3) + h2 / 3, h2 + '1', BG_GREEN + FG_BLACK);
+        }
+            break;
+        case SudokuPuzzle::ERR: //this is currently to determine if hint cannot resolve the puzzle //TODO remove this
             DrawString(0, 0, "ERROR", BG_RED+FG_BLACK, false);
             break;
+            
     }
 }
 
 void Game::Destroy(){    
-    destroyed = true;
+    delete legend;
+    delete debug;
 }

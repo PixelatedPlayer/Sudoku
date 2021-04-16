@@ -4,33 +4,39 @@
 
 class Game : public Engine {
 private:
-    SudokuPuzzle puzzle;
-    Frame* legend;
-    Frame* debug;
+    SudokuPuzzle puzzle; //sudoku object
+    Frame* legend; //visual frame pointer to draw legend
+    Frame* debug; //visual frame pointer to draw debug info
     
-    int xSel=0, ySel=0, mSel=0;
-    float totalTime = 0;
-    SudokuPuzzle::hint hint;
-    //user customizations
-    bool boardSelection = true; //as opposed to menu selection
-    bool checkerboard = true; //not functional
-    bool noteToggles = true;
-    bool notesOn = false; //only used when hintToggles is true
-    bool hintToggle = false;
-    bool invertNotes = false; //not functional
+    int xSel=0, ySel=0, mSel=0; //selection integers, xSel and ySel for the board and mSel for the menu
+    float totalTime = 0; //running time; updated in Update and used to track time records
+    SudokuPuzzle::hint hint; //last requested hint
+    bool boardSelection = true; //if false we are in the menu
+    bool autoRemove = true; //if true, we auto remove notes when marking
+    bool notesOn = false; //if true, display notes on board instead of values
+    bool hintToggle = false; //if true, draw hint
     
     
-    void DrawBoard();
-    void DrawNotes();
-    void DrawMenu();
-    void DrawHints(SudokuPuzzle::hint hints);
-    void Clear();
-    void RequestHint();
+    //USER SETTINGS
+    bool checkerboard = true; //if true, draw a checkerboard for hints
+    bool noteToggles = true; //if true, shift toggles notes; if false shift must be held
+    bool invertNotes = false; //not yet functional
+    
+    
+    //HELPER FUNCTIONS
+    void DrawBoard(); //Draw the board and values
+    void DrawNotes(); //Draw notes
+    void DrawMenu(); //Draw Menu
+    void DrawHints(SudokuPuzzle::hint hints); //Draw hints
+    void Clear(); //Clear Board (only within borders, Engine::Clear clears whole console)
+    void RequestHint(); //Request a hint from puzzle
 public:
-    Game(int width, int height) : Engine(width, height, "Sudoku") { }
+    
+    //INHERITED FUNCTIONS
+    Game(int width, int height) : Engine(width, height, "Sudoku") { }   //Construct console
 
-    virtual bool Create();
-    virtual void HandleInput(int key, Engine::keyState state);
-    virtual bool Update(float deltaTime);
-    virtual void Destroy();
+    virtual bool Create(); //Console initialization
+    virtual void HandleInput(int key, Engine::keyState state); //Handle console input
+    virtual bool Update(float deltaTime); //Frame tick, deltaTime is time since last tick
+    virtual void Destroy(); //Called on destruction; necessary for console close events (multithreaded)
 };

@@ -19,6 +19,7 @@
         <itemPath>src/Engine/Log.h</itemPath>
       </logicalFolder>
       <logicalFolder name="f1" displayName="Game" projectFiles="true">
+        <itemPath>src/Controller.h</itemPath>
         <itemPath>src/Game/Game.cpp</itemPath>
         <itemPath>src/Game/Game.h</itemPath>
         <itemPath>src/Game/Sudoku.h</itemPath>
@@ -70,6 +71,8 @@
           </incDir>
         </ccTool>
       </compileType>
+      <item path="src/Controller.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="src/Engine/Engine.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="src/Engine/Engine.h" ex="false" tool="3" flavor2="0">
@@ -125,6 +128,8 @@
           <developmentMode>5</developmentMode>
         </asmTool>
       </compileType>
+      <item path="src/Controller.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="src/Engine/Engine.cpp" ex="false" tool="1" flavor2="0">
       </item>
       <item path="src/Engine/Engine.h" ex="false" tool="3" flavor2="0">
