@@ -67,7 +67,7 @@ void Game::HandleInput(int key, keyState state){
         if (!begun){
             mSel++;
             if (mSel > 2)
-                mSel == (canContinue ? 0 : 1);
+                mSel = (canContinue ? 0 : 1);
             DrawMenu();
         }
         else{
