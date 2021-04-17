@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <fstream>
 #include <random>
 #include <ctime>
 #include "Engine/Log.h"
@@ -20,10 +21,11 @@ using namespace std; // editor's note: don't do this
 
 class SudokuPuzzle {
 private:
+    const char* fileName = "Save.bin";
     //Solve the puzzle - used to ensure generated puzzles are solvable
-    bool AISolve(int startingPuzzle[81]){        
+    bool AISolve(char startingPuzzle[81]){        
         bool notes[81][9];
-        int puzzle[81];
+        char puzzle[81];
         for (int i = 0; i < 81; i++){
             puzzle[i] = startingPuzzle[i];
         }
@@ -104,21 +106,20 @@ private:
     static int GetYFromI(int i){ return i / 9; }
 public: // Should every variable and method be public? Probably not. Is that going to stop me? Definitely not.
     
-    int sudokuSolved[81] = {}; // Complete sudoku with every square filled
-    int sudokuUser[81] = {}; // The sudoku the user sees, with the numbers in certain squares removed
+    char sudokuSolved[81] = {}; // Complete sudoku with every square filled
+    char sudokuUser[81] = {}; // The sudoku the user sees, with the numbers in certain squares removed
     bool sudokuStarting[81] = {};
     
     // INTERACTIONS
     bool notes[81][9] = {}; // User entered notes
-    bool aiNotes[81][9] = {};
     int Get(int x, int y){
         return sudokuUser[x+y*9];
     }
     int GetNote(int x, int y, int z){
         return notes[x+y*9][z];
     }
-    void Set(int x, int y, int v) { sudokuUser[x+y*9] = v; }
-    void SetNote(int x, int y, int z, bool v) { notes[x+y*9][z] = v; }
+    void Set(int x, int y, int v) { sudokuUser[x+y*9] = v; Save(fileName);}
+    void SetNote(int x, int y, int z, bool v) { notes[x+y*9][z] = v; Save(fileName);}
     bool IsStarting(int x, int y){
         return sudokuStarting[x + y * 9];
     }
@@ -173,7 +174,7 @@ public: // Should every variable and method be public? Probably not. Is that goi
         hintType type;
     };
     
-    bool IsComplete(int puzzle[81]){
+    bool IsComplete(char puzzle[81]){
         for (int i = 0; i < 81; i++){
             if (puzzle[i] == 0)
                 return false;
@@ -214,7 +215,7 @@ public: // Should every variable and method be public? Probably not. Is that goi
     }
     
     //Request hint from provided puzzle
-    static hint RequestHint(int puzzle[81], bool notes[81][9]){
+    static hint RequestHint(char puzzle[81], bool notes[81][9]){
         //SCAN SINGLE NOTES - entry with only one note
         for (int i = 0; i < 81; i++){
             if (puzzle[i] != 0) continue;
@@ -457,7 +458,7 @@ public: // Should every variable and method be public? Probably not. Is that goi
     }
     
     //Fill provided puzzle notes
-    static void FillNotes(int (&puzzle)[81], bool (&notes)[81][9]){
+    static void FillNotes(char (&puzzle)[81], bool (&notes)[81][9]){
         //start by filling them, and we'll remove from there
         for (int i = 0; i < 81; i++){
             for (int j = 0; j < 9; j++)
@@ -512,8 +513,66 @@ public: // Should every variable and method be public? Probably not. Is that goi
         }
     }
     
+    void Save(string fileName) {
+        std::ofstream fout(fileName, std::ofstream::binary);
+        
+        for (int i = 0; i < 81; i++){
+            fout << sudokuUser[i];
+        }
+        for (int i = 0; i < 81; i++) {
+            fout << sudokuSolved[i];
+        }
+        for (int i = 0; i < 81; i++){
+            fout << (char)sudokuStarting[i];
+        }
+        for (int i = 0; i < 81; i++){
+            for (int j = 0; j < 9; j++){
+                fout << (char)notes[i][j];
+            }
+        }
+        
+        fout.close();
+    }
     
-    bool possible(int *sudoku, int x, int y, int n) {
+    bool Load(string fileName) {
+        std::ifstream fin(fileName, std::ifstream::binary);
+        if (!fin || fin.eof())
+            return false;
+        
+        fin.read(sudokuUser, sizeof(sudokuUser));
+        fin.read(sudokuSolved, sizeof(sudokuSolved));
+        for (int i = 0; i < 81; i++){
+            char c;
+            fin >> c;
+            if (c == (char)(false))
+                sudokuStarting[i] = false;
+            else
+                sudokuStarting[i] = true;
+        }
+        for (int i = 0; i < 81; i++){
+            for (int j = 0; j < 9; j++){
+                char c;
+                fin >> c;
+                if (c == (char)(false))
+                    notes[i][j] = false;
+                else
+                    notes[i][j] = true;
+            }
+        }
+        
+        fin.close();
+        return true;
+    }
+    
+    bool Load(){
+        return Load(fileName);
+    }
+    
+    bool LoadFileExists(){
+        return std::ifstream(fileName, std::ifstream::binary).good();
+    }
+    
+    bool possible(char *sudoku, int x, int y, int n) {
         //Given a sudoku puzzle, a square position, and a number value,
         //Determine whether that value can legally be placed in that square
         //Weird behavior if the square is already filled in
@@ -529,7 +588,7 @@ public: // Should every variable and method be public? Probably not. Is that goi
         }
         return true;
     }
-    bool possible(int *sudoku, int i, int n) {
+    bool possible(char *sudoku, int i, int n) {
         // function overload using an index rather than an xy position
         return possible(sudoku, i % 9, i / 9, n);
     }

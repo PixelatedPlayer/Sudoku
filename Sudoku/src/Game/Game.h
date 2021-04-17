@@ -7,6 +7,7 @@ private:
     SudokuPuzzle puzzle; //sudoku object
     Frame* legend; //visual frame pointer to draw legend
     Frame* debug; //visual frame pointer to draw debug info
+    Frame* menu;
     
     int xSel=0, ySel=0, mSel=0; //selection integers, xSel and ySel for the board and mSel for the menu
     float totalTime = 0; //running time; updated in Update and used to track time records
@@ -22,11 +23,16 @@ private:
     bool noteToggles = true; //if true, shift toggles notes; if false shift must be held
     bool invertNotes = false; //not yet functional
     
+    bool begun = false; //marks if we've left the main menu
+    bool canContinue = false;  //marks if a saved game was discovered
+    
     
     //HELPER FUNCTIONS
     void DrawBoard(); //Draw the board and values
     void DrawNotes(); //Draw notes
-    void DrawMenu(); //Draw Menu
+    void DrawBorders(); //Draw borders
+    void DrawLegend(); //Draw Legend
+    void DrawMenu();
     void DrawHints(SudokuPuzzle::hint hints); //Draw hints
     void Clear(); //Clear Board (only within borders, Engine::Clear clears whole console)
     void RequestHint(); //Request a hint from puzzle
