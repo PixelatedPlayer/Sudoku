@@ -13,7 +13,7 @@
 
 #include <cstdlib>
 #include <iostream>
-#include "Game/Game.h"
+#include "Game/View.h"
 #include "Engine/Log.h"
 
 using namespace std;
@@ -44,7 +44,7 @@ int main(int argc, char** argv) {
 #else
     if (w < size.X && h < size.Y) {
 #endif
-        Game game(w, h);
+        View game(w, h);
         game.Start();
     } else {
         Log::Debug.Critical("Game cannot run on your maximum console size. Please reduce your console font size or play on a greater resolution monitor.");

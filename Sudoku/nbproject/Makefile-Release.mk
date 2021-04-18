@@ -37,7 +37,7 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 OBJECTFILES= \
 	${OBJECTDIR}/src/Engine/Engine.o \
 	${OBJECTDIR}/src/Engine/Log.o \
-	${OBJECTDIR}/src/Game/Game.o \
+	${OBJECTDIR}/src/Game/View.o \
 	${OBJECTDIR}/src/Graphics/Frame.o \
 	${OBJECTDIR}/src/main.o
 
@@ -76,10 +76,10 @@ ${OBJECTDIR}/src/Engine/Log.o: src/Engine/Log.cpp
 	${RM} "$@.d"
 	$(COMPILE.cc) -O2 -Isrc -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/Engine/Log.o src/Engine/Log.cpp
 
-${OBJECTDIR}/src/Game/Game.o: src/Game/Game.cpp
+${OBJECTDIR}/src/Game/View.o: src/Game/View.cpp
 	${MKDIR} -p ${OBJECTDIR}/src/Game
 	${RM} "$@.d"
-	$(COMPILE.cc) -O2 -Isrc -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/Game/Game.o src/Game/Game.cpp
+	$(COMPILE.cc) -O2 -Isrc -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/Game/View.o src/Game/View.cpp
 
 ${OBJECTDIR}/src/Graphics/Frame.o: src/Graphics/Frame.cpp
 	${MKDIR} -p ${OBJECTDIR}/src/Graphics
