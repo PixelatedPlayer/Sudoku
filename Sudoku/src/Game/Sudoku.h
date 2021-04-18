@@ -74,6 +74,7 @@ public: // Should every variable and method be public? Probably not. Is that goi
     bool IsStarting(int x, int y){ return sudokuStarting[x + y * 9]; }
     coord GetCoordFromHouseIndex(house house, int i, int j);
     bool IsComplete(char puzzle[81]);
+    bool IsComplete() { return IsComplete(sudokuUser); }
     
     std::vector<coord> MarkErrors(int x, int y, int v);
     
@@ -85,6 +86,7 @@ public: // Should every variable and method be public? Probably not. Is that goi
     //Fill this puzzles notes
     static void FillNotes(char (&puzzle)[81], bool (&notes)[81][9]);
     void FillNotes() { FillNotes(sudokuUser, notes); }
+    void ClearNotesInHouses(int x, int y, int v);
     
     // FILE FUNCTIONS
     void Save(std::string fileName);

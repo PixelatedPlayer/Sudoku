@@ -18,27 +18,16 @@ bool View::Create() {
     if (!controller.CanContinue())
         mSel = 1;
     
-    //CREATE THE BOARD, which is only a section of the full board, redrawn to
-    //create the complete board
-    Frame board = Frame(11,11);
-    board.DrawBorder(' ', BG_WHITE);
-    
-    //DRAW THE BOARD
-    for (int x = 0; x < 3; x++){
-        for (int y = 0; y < 3; y++){
-            DrawFrame(x*10, y*10, &board);
-        }
-    }
-    
     //CREATE AND FILL THE MAIN MENU
-    loadingMenu = new Frame(40, 80);
-    loadingMenu->DrawString(0,0, "Sudoku!");
-    loadingMenu->DrawString(0,1, "By Chris Schlenker,");
-    loadingMenu->DrawString(0,2, "Mark Welch and Braxton Mott");
+    loadingMenu = new Frame(36, 20);
+    loadingMenu->DrawBorder(' ', BG_WHITE);
+    loadingMenu->DrawString(1,0, "Sudoku!");
+    loadingMenu->DrawString(1,1, "By Chris Schlenker,");
+    loadingMenu->DrawString(1,2, "Mark Welch and Braxton Mott");
     
     
     //CREATE AND FILL THE GAME MENU
-    gameMenu = new Frame(30, 28);
+    gameMenu = new Frame(30, 31);
     gameMenu->DrawString(0,2,"WASD/Arrow Keys to move");
     gameMenu->DrawString(0,3,"selection. Shift to view notes");
     gameMenu->DrawString(0,4,"1-9 to write (0 clears)");
@@ -48,7 +37,8 @@ bool View::Create() {
     
     
     //CREATE THE DEBUG MENU
-    debug = new Frame(100, 7);
+    debug = new Frame(40, 13);
+    debug->DrawBorder(' ', BG_WHITE);
     
     //DRAW THE MAIN MENU TO START
     DrawMenu();
@@ -56,7 +46,7 @@ bool View::Create() {
 }
 
 void View::HandleInput(int key, keyState state){
-    if (state.held && !state.pressed && !state.released) return;
+    if (!incomplete || (state.held && !state.pressed && !state.released)) return;
     
     //SELECTION MOVEMENT, determines if we're in the main menu, game menu, or board
     if (controller.Begun() && boardSelection && (key == VK_RIGHT || key == 'D') && state.pressed){
@@ -161,10 +151,13 @@ void View::HandleInput(int key, keyState state){
             switch (mSel){
                 case 0:
                     controller.Load();
+                    Engine::Clear();
                     DrawBorders();
                     DrawGameMenu();
                     break;
                 case 1:
+                    controller.NewGame();
+                    Engine::Clear();
                     DrawBorders();
                     DrawGameMenu();
                     break;
@@ -204,6 +197,8 @@ void View::HandleInput(int key, keyState state){
                     if (obstructions.size() > 0) return;
                 }
                 controller.Set(xSel, ySel, (key=='0'||key==controller.Get(xSel,ySel)?0:key-'0'));
+                if (controller.IsComplete())
+                    Victory();
             }
         }
     }
@@ -216,14 +211,14 @@ void View::HandleInput(int key, keyState state){
     
     if (notesOn){
         DrawNotes();
-    } else
+    } else if (incomplete)
         DrawBoard();
     if (hintToggle)
         DrawHints(hint);
 }
 
 bool View::Update(float deltaTime){
-    if (controller.Begun()){
+    if (controller.Begun() && incomplete){
         if (boardSelection) //don't increment time if we're paused //TODO if we keep this, we should hide the board while in the menu. Otherwise, we could pause to figure out the puzzle and play and enter it to cheat time record
             controller.IncrementTime(deltaTime);
 
@@ -265,16 +260,17 @@ void View::DrawGameMenu(){
     gameMenu->SetBit(15,10, noteToggles?'X':' ', BG_GRAY + FG_BLACK);
     gameMenu->SetBit(15,11, checkerboard?'X':' ', BG_GRAY + FG_BLACK);
     gameMenu->SetBit(15,12, invertNotes?'X':' ', BG_GRAY + FG_BLACK);
-    DrawFrame(40, 0, gameMenu);
-    Log::Debug.Display(debug, logINFO, 0, 1, false);
-    DrawFrame(0, 32, debug);
+    DrawFrame(32, 0, gameMenu);
+    
+    Log::Debug.DrawToFrame(debug, logINFO, 1, 1, false, 2);
+    DrawFrame(32, 18, debug);
 }
 
 void View::DrawMenu(){
-    loadingMenu->DrawString(0, 5, "Continue", (controller.CanContinue() ? mSel == 0 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE : BG_BLACK + FG_GRAY), false);
-    loadingMenu->DrawString(0, 6, "New Game (Takes some time)", (mSel == 1 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
-    loadingMenu->DrawString(0, 7, "Exit Game", (mSel == 2 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
-    DrawFrame(0, 0, loadingMenu);
+    loadingMenu->DrawString(1, 5, "Continue", (controller.CanContinue() ? mSel == 0 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE : BG_BLACK + FG_GRAY), false);
+    loadingMenu->DrawString(1, 6, "New Game (Takes some time)", (mSel == 1 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
+    loadingMenu->DrawString(1, 7, "Exit Game", (mSel == 2 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
+    DrawFrame(18, 5, loadingMenu);
 }
 
 void View::Clear(){
@@ -332,6 +328,21 @@ void View::DrawHints(Sudoku::hint hint){
             break;
             
     }
+}
+
+void View::Victory(){
+    controller.DeleteSave();
+    incomplete = false;
+    Frame victory(36, 20);
+    victory.DrawBorder(' ', BG_WHITE);
+    victory.DrawString(1, 0, "Congratulations!");
+    victory.DrawString(1, 1, "You completed the puzzle in");
+    char s[16];
+    snprintf(s, 16, "%.0f seconds!", controller.GetTime());
+    
+    victory.DrawString(1, 2, s);
+    Engine::Clear();
+    DrawFrame(18, 5, &victory);
 }
 
 View::~View(){    

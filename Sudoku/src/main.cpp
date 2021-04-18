@@ -20,8 +20,8 @@ using namespace std;
 
 int main(int argc, char** argv) {
     COORD size;
-    int w=80;
-    int h=40;
+    int w=72;
+    int h=31;
     size = GetLargestConsoleWindowSize(GetStdHandle(STD_OUTPUT_HANDLE));
 
 #ifdef MAX_SIZE

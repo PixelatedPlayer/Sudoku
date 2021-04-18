@@ -28,7 +28,7 @@ std::string Log::Format(std::string fmt, va_list argv) {
     return str;
 }
 
-void Log::Display(Frame* frame, LOG_LEVEL lvl, int xOffset, int yOffset, bool ignoreLast) {
+void Log::DrawToFrame(Frame* frame, LOG_LEVEL lvl, int xOffset, int yOffset, bool ignoreLast, int xEndOffset) {
     int y = yOffset;
 	int start = log.size() - frame->GetHeight() + 1 + ignoreLast;
 	if (start < 0)
@@ -38,26 +38,41 @@ void Log::Display(Frame* frame, LOG_LEVEL lvl, int xOffset, int yOffset, bool ig
         if (log[i].level >= lvl) {
             std::string out;
             char col;
+            int length;
             switch (log[i].level) {
                 case logCRITICAL:
                     out = "CRITICAL: ";
+                    length = 10;
                     col = BG_BLACK + FG_DARK_RED;
                     break;
                 case logERROR:
                     out = "ERROR: ";
+                    length = 7;
                     col = BG_BLACK + FG_DARK_RED;
                     break;
                 case logWARNING:
                     out = "WARNING: ";
+                    length = 9;
                     col = BG_BLACK + FG_YELLOW;
                     break;
                 case logINFO:
                     out = "INFO: ";
+                    length = 6;
                     col = BG_BLACK + FG_WHITE;
                     break;
             }
-            out += log[i].msg;
-            frame->DrawString(xOffset, y++, out, col);
+            
+            //basic word wrap
+            int index = 0;
+            while (index < log[i].msg.length()){
+                while (length < frame->GetWidth() - xEndOffset){
+                    out += log[i].msg[index++];
+                    length++;
+                }
+                frame->DrawString(xOffset, y++, out, col);
+                out = "";
+                length = 0;
+            }
         }
     }
 }

@@ -31,6 +31,6 @@ public:
     void Error(std::string msg, ...);
     void Critical(std::string msg, ...);
         
-    void Display(Frame* console, LOG_LEVEL lvl = logINFO, int xOffset = 0, int yOffset = 0, bool ignoreLast = false);
+    void DrawToFrame(Frame* console, LOG_LEVEL lvl = logINFO, int xOffset = 0, int yOffset = 0, bool ignoreLast = false, int xEndOffset = 0);
     void ToFile(std::string file, LOG_LEVEL lvl = logINFO);
 };

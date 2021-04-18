@@ -21,6 +21,7 @@ private:
     Sudoku::hint hint; //last requested hint, stored for display
     
     int xSel=0, ySel=0, mSel=0; //selection integers, xSel and ySel for the board and mSel for the menu
+    bool incomplete = true;
     bool boardSelection = true; //if false we are in the menu
     bool notesOn = false; //if true, display notes on board instead of values
     bool hintToggle = false; //if true, draw hint
@@ -37,6 +38,7 @@ private:
     void DrawGameMenu(); //Draw Game menu and legend
     void DrawMenu(); //Draw main menu
     void DrawHints(Sudoku::hint hints); //Draw hints
+    void Victory();
     void Clear(); //Clear Board (only within borders, Engine::Clear clears whole console)
 public:
     

@@ -18,6 +18,8 @@ void Controller::NewGame(){
 
 void Controller::Set(int x, int y, int v){
     puzzle.Set(x, y, v);
+    if (v != 0);
+        puzzle.ClearNotesInHouses(x, y, v - 1);
     puzzle.Save(fileName);
 }
 
@@ -25,4 +27,8 @@ void Controller::Set(int x, int y, int v){
 void Controller::SetNote(int x, int y, int z, bool v){
     puzzle.SetNote(x, y, z, v);
     puzzle.Save(fileName);
+}
+
+void Controller::DeleteSave() {
+    std::remove(fileName);
 }

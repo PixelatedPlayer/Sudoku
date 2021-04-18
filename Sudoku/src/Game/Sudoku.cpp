@@ -368,6 +368,27 @@ Sudoku::hint Sudoku::RequestHint(char puzzle[81], bool notes[81][9]){
     return hint(); //return empty hit means we got nothing
 }
 
+void Sudoku::ClearNotesInHouses(int x, int y, int v){
+    //clear col
+    for (int yy = 0; yy < 9; yy++){
+        notes[x + yy * 9][v] = false;
+    }
+    
+    //clear row
+    for (int xx = 0; xx < 9; xx++){
+        notes[xx + y * 9][v] = false;
+    }
+    
+    //clear block
+    int blockX = x / 3;
+    int blockY = y / 3;
+    for (int xx = 0; xx < 3; xx++){
+        for (int yy = 0; yy < 3; yy++){
+            notes[(blockX * 3 + xx) + (blockY * 3 + yy)*9][v] = false;
+        }
+    }
+}
+
 void Sudoku::FillNotes(char (&puzzle)[81], bool (&notes)[81][9]){
     //start by filling them, and we'll remove from there
     for (int i = 0; i < 81; i++){

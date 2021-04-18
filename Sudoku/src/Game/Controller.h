@@ -17,6 +17,7 @@ public:
     Sudoku::hint RequestHint() { return puzzle.RequestHint(); } //returns a hint for the puzzle
     void FillNotes() { puzzle.FillNotes(); } //fills the puzzle notes for hints
     bool IsStarting(int x, int y) { return puzzle.IsStarting(x, y); } //returns if the indicated location is a starting location
+    bool IsComplete() { return puzzle.IsComplete(); }
     int Get(int x, int y){ return puzzle.Get(x, y); } //returns the value at the specified location
     int GetNote(int x, int y, int z){ return puzzle.GetNote(x, y, z); } //returns the value of the specified note at location
     void IncrementTime(float deltaTime) { elapsedTime += deltaTime; }
@@ -29,4 +30,5 @@ public:
     
     void Load(); //loads the puzzle
     void NewGame(); //generates a puzzle
+    void DeleteSave(); //delete the save game, only done when completed
 };
