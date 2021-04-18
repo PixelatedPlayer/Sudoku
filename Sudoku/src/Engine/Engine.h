@@ -16,7 +16,6 @@ protected:
         bool released;
         bool held;
     };
-    static bool destroyed;
     
 private:
     int screenWidth;
@@ -27,7 +26,7 @@ private:
     SMALL_RECT window;
     short keyOldState[256] = { 0 };
     short keyNewState[256] = { 0 };
-    static bool running;
+    bool running = true;
 
     keyState keys[256];
 public:
@@ -54,5 +53,4 @@ public:
 #ifndef REAL_TIME
     virtual bool Update(int key, keyState state) = 0;
 #endif
-    virtual void Destroy() { destroyed = true; } //similar to destructor - free memory from implementation variables
 };

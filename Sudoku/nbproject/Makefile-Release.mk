@@ -37,6 +37,8 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 OBJECTFILES= \
 	${OBJECTDIR}/src/Engine/Engine.o \
 	${OBJECTDIR}/src/Engine/Log.o \
+	${OBJECTDIR}/src/Game/Controller.o \
+	${OBJECTDIR}/src/Game/Sudoku.o \
 	${OBJECTDIR}/src/Game/View.o \
 	${OBJECTDIR}/src/Graphics/Frame.o \
 	${OBJECTDIR}/src/main.o
@@ -75,6 +77,16 @@ ${OBJECTDIR}/src/Engine/Log.o: src/Engine/Log.cpp
 	${MKDIR} -p ${OBJECTDIR}/src/Engine
 	${RM} "$@.d"
 	$(COMPILE.cc) -O2 -Isrc -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/Engine/Log.o src/Engine/Log.cpp
+
+${OBJECTDIR}/src/Game/Controller.o: src/Game/Controller.cpp
+	${MKDIR} -p ${OBJECTDIR}/src/Game
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -Isrc -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/Game/Controller.o src/Game/Controller.cpp
+
+${OBJECTDIR}/src/Game/Sudoku.o: src/Game/Sudoku.cpp
+	${MKDIR} -p ${OBJECTDIR}/src/Game
+	${RM} "$@.d"
+	$(COMPILE.cc) -O2 -Isrc -std=c++14 -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/Game/Sudoku.o src/Game/Sudoku.cpp
 
 ${OBJECTDIR}/src/Game/View.o: src/Game/View.cpp
 	${MKDIR} -p ${OBJECTDIR}/src/Game

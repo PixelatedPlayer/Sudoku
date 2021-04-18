@@ -7,9 +7,6 @@
 #include <chrono>
 #endif
 
-bool Engine::destroyed = false;
-bool Engine::running = true;
-
 Engine::Engine(int width, int height, std::string name){
     screenWidth = width;
     screenHeight = height;
@@ -226,9 +223,6 @@ void Engine::Start() {
 #endif
     }
 
-    //implementation deconstruct
-    Destroy();
     //only heap memory in core
     delete[] screenBuffer;
-    destroyed = true;
 }
