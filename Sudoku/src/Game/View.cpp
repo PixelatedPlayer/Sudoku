@@ -21,9 +21,14 @@ bool View::Create() {
     //CREATE AND FILL THE MAIN MENU
     loadingMenu = new Frame(36, 20);
     loadingMenu->DrawBorder(' ', BG_WHITE);
-    loadingMenu->DrawString(1,0, "Sudoku!");
-    loadingMenu->DrawString(1,1, "By Chris Schlenker,");
-    loadingMenu->DrawString(1,2, "Mark Welch and Braxton Mott");
+    loadingMenu->DrawString(13,1, "SUDOKU!");
+    loadingMenu->DrawString(7,2, "By Chris Schlenker,");
+    loadingMenu->DrawString(4,3, "Mark Welch and Braxton Mott");
+    loadingMenu->DrawString(12, 5, "   |   |   ");
+    loadingMenu->DrawString(12, 6, "---+---+---");
+    loadingMenu->DrawString(12, 7, "   |   |   ");
+    loadingMenu->DrawString(12, 8, "---+---+---");
+    loadingMenu->DrawString(12, 9, "   |   |   ");
     
     
     //CREATE AND FILL THE GAME MENU
@@ -326,10 +331,10 @@ void View::DrawGameMenu(){
 }
 
 void View::DrawMenu(){
-    loadingMenu->DrawString(1, 5, "Continue", (controller.CanContinue() ? mSel == 0 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE : BG_BLACK + FG_GRAY), false);
-    loadingMenu->DrawString(1, 7, "New Game", (mSel == 1 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
-    loadingMenu->DrawString(1, 9, "View Scoreboard", (mSel == 2 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
-    loadingMenu->DrawString(1, 11, "Exit Game", (mSel == 3 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
+    loadingMenu->DrawString(13, 11, "Continue", (controller.CanContinue() ? mSel == 0 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE : BG_BLACK + FG_GRAY), false);
+    loadingMenu->DrawString(13, 13, "New Game", (mSel == 1 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
+    loadingMenu->DrawString(13, 15, "Scoreboard", (mSel == 2 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
+    loadingMenu->DrawString(13, 17, "Exit Game", (mSel == 3 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
     DrawFrame(LOADING_MENU_X, LOADING_MENU_Y, loadingMenu);
 }
 
