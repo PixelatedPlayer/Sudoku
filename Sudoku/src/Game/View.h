@@ -28,6 +28,7 @@ private:
     bool boardSelection = true; //if false we are in the menu
     bool notesOn = false; //if true, display notes on board instead of values
     bool hintToggle = false; //if true, draw hint
+    bool difficultySelection = false; //we are selecting the game difficulty
     
     //USER SETTINGS
     bool checkerboard = true; //if true, draw a checkerboard for hints
@@ -44,7 +45,7 @@ private:
     void DrawMenu(); //Draw main menu
     void DrawHints(Sudoku::hint hints); //Draw hints
     void Victory();
-    void Clear(); //Clear Board (only within borders, Engine::Clear clears whole console)
+    void ClearBoard(); //Clear Board (only within borders, Engine::Clear clears whole console)
 public:
     
     //INHERITED FUNCTIONS

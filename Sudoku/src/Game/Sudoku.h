@@ -37,18 +37,28 @@ enum house{
     block
 };
 
+//DIFFICULTY ENUM
+enum Difficulty {
+    Easy,
+    Medium,
+    Hard
+};
+
 class Sudoku {
 private:
     //DATA
+    const int INCREASED_REMOVALS_PER_DIFFICULTY = 4;
+    
     char solved[81] = {}; // Complete sudoku with every square filled
     char data[81] = {}; // The sudoku the user sees, with the numbers in certain squares removed
     bool starting[81] = {};
     bool notes[81][9] = {}; // User entered notes
     float elapsedTime = 0.0f;
     bool leaderboardSave = true;
+    Difficulty difficulty;
     
     //FUNCTIONS
-    bool AISolve(char startingPuzzle[81]); //Solve the puzzle - used to ensure generated puzzles are solvable
+    bool AISolve(char startingPuzzle[81], Difficulty dGoal, Difficulty& current); //Solve the puzzle - used to ensure generated puzzles are solvable
     
     static int GetXFromI(int i) { return i % 9; } //returns x location from the index (out of 81)
     static int GetYFromI(int i) { return i / 9; } //returns Y location from the index (out of 81)
@@ -56,14 +66,15 @@ public: // Should every variable and method be public? Probably not. Is that goi
     //DATA STRUCTURES
     // HINT DATA
     struct hint{
-        hint(int x, int y, int z, hintType type) : x(x), y(y), z(z), type(type) {}
-        hint(int i, int z, hintType type): x(GetXFromI(i)), y(GetYFromI(i)), z(z), type(type) {}
-        hint(): x(0), y(0), z(0), type(ERR) {}
+        hint(int x, int y, int z, hintType type, Difficulty difficulty = Easy) : x(x), y(y), z(z), type(type), difficulty(difficulty) {}
+        hint(int i, int z, hintType type, Difficulty difficulty = Easy): x(GetXFromI(i)), y(GetYFromI(i)), z(z), type(type), difficulty(difficulty) {}
+        hint(): x(0), y(0), z(0), type(ERR), difficulty(Easy) {}
 
         int x, y, z; //x, y are locations, z is note location where applicable (by type)
         int i, j, k = 0; //extra info for some hint types (pair: i, j index in house)
         house h = row; //house for hint: 0==row,1==col,2==block
         hintType type;
+        Difficulty difficulty;
     };
 
     // DATA INTERFACTING
@@ -78,6 +89,7 @@ public: // Should every variable and method be public? Probably not. Is that goi
     void IncrementTime(float deltaTime) { elapsedTime += deltaTime; }
     float GetTime() { return elapsedTime; }
     void SetLeaderboardSave(bool save) { leaderboardSave = save; }
+    Difficulty GetDifficulty() { return difficulty; }
     
     std::vector<coord> MarkErrors(int x, int y, int v);
     std::vector<coord> IsValid();
@@ -103,6 +115,6 @@ public: // Should every variable and method be public? Probably not. Is that goi
     // function overload using an index rather than an xy position
     bool Possible(char *sudoku, int i, int n) { return Possible(sudoku, i % 9, i / 9, n); }
     int MultipleSolutions(int start);
-    bool RemoveSquares();
-    void CreateSudoku();
+    bool RemoveSquares(Difficulty difficulty);
+    void CreateSudoku(Difficulty difficulty);
 };

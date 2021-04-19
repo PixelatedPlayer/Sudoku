@@ -1,6 +1,6 @@
 #include "Sudoku.h"
 
-bool Sudoku::AISolve(char startingPuzzle[81]){        
+bool Sudoku::AISolve(char startingPuzzle[81], Difficulty dGoal, Difficulty& current){        
     bool notes[81][9];
     char puzzle[81];
     for (int i = 0; i < 81; i++){
@@ -10,6 +10,12 @@ bool Sudoku::AISolve(char startingPuzzle[81]){
     FillNotes(puzzle, notes);
     hint hint = RequestHint(puzzle, notes);
     while (hint.type != ERR){
+        //confirm difficulty is still met
+        if (hint.difficulty > dGoal) //if it's too hard, this aint it
+            return false;
+        if (hint.difficulty > current) //if this is the hardest step thusfar, save it
+            current = hint.difficulty;
+        
         //perform hint on puzzle
         switch(hint.type){
             case mark:
@@ -146,7 +152,7 @@ Sudoku::hint Sudoku::RequestHint(char puzzle[81], bool notes[81][9]){
                 h = j;
             }
         }
-        if (n==1) return hint(i, h, mark);
+        if (n==1) return hint(i, h, mark, Easy);
     }
 
     //SCAN LONE NOTE - for a column/row/block with only one of any value
@@ -163,7 +169,7 @@ Sudoku::hint Sudoku::RequestHint(char puzzle[81], bool notes[81][9]){
                 }
             }
             if (num == 1)
-                return hint(i, y, n, mark);
+                return hint(i, y, n, mark, Medium);
         }
     }
     //scan each col
@@ -179,7 +185,7 @@ Sudoku::hint Sudoku::RequestHint(char puzzle[81], bool notes[81][9]){
                 }
             }
             if (num == 1)
-                return hint(x,i,n,mark);
+                return hint(x,i,n,mark, Medium);
         }
     }
     //scan each block
@@ -202,7 +208,7 @@ Sudoku::hint Sudoku::RequestHint(char puzzle[81], bool notes[81][9]){
                     }
                 }
                 if (num == 1){
-                    return hint(ix, iy, n, mark);
+                    return hint(ix, iy, n, mark, Medium);
                 }
             }
         }
@@ -247,7 +253,7 @@ Sudoku::hint Sudoku::RequestHint(char puzzle[81], bool notes[81][9]){
                                     numN2++;
                             }
                             if (numN1 > 2 || numN2 > 2){
-                                hint h(y, twoNotes[i].y, twoNotes[i].z, pair);
+                                hint h(y, twoNotes[i].y, twoNotes[i].z, pair, Hard);
                                 h.i = twoNotes[i].x;
                                 h.j = twoNotes[j].x;
                                 h.h = row;
@@ -295,7 +301,7 @@ Sudoku::hint Sudoku::RequestHint(char puzzle[81], bool notes[81][9]){
                                     numN2++;
                             }
                             if (numN1 > 2 || numN2 > 2){
-                                hint h(x, twoNotes[i].y, twoNotes[i].z, pair);
+                                hint h(x, twoNotes[i].y, twoNotes[i].z, pair, Hard);
                                 h.i = twoNotes[i].x;
                                 h.j = twoNotes[j].x;
                                 h.h = col;
@@ -350,7 +356,7 @@ Sudoku::hint Sudoku::RequestHint(char puzzle[81], bool notes[81][9]){
                                     }
                                 }
                                 if (numN1 > 2 || numN2 > 2){
-                                    hint h(y*3+x, twoNotes[i].y, twoNotes[i].z, pair);
+                                    hint h(y*3+x, twoNotes[i].y, twoNotes[i].z, pair, Hard);
                                     h.i = twoNotes[i].x;
                                     h.j = twoNotes[j].x;
                                     h.h = block;
@@ -364,6 +370,8 @@ Sudoku::hint Sudoku::RequestHint(char puzzle[81], bool notes[81][9]){
             }
         }
     }
+    
+    
     
     return hint(); //return empty hit means we got nothing
 }
@@ -425,6 +433,7 @@ void Sudoku::FillNotes(char (&puzzle)[81], bool (&notes)[81][9]){
 void Sudoku::Save(std::string fileName) {
     std::ofstream fout(fileName, std::ofstream::binary | std::ofstream::out);
 
+    fout.write(reinterpret_cast<char*>(&difficulty), sizeof(difficulty));
     fout.write(reinterpret_cast<char*>(&elapsedTime), sizeof(elapsedTime));
     fout.write(reinterpret_cast<char*>(&leaderboardSave), sizeof(leaderboardSave));
     fout.write(reinterpret_cast<char*>(data), sizeof(data)*81);
@@ -441,6 +450,7 @@ bool Sudoku::Load(std::string fileName) {
     if (!fin || fin.eof())
         return false;
     
+    fin.read(reinterpret_cast<char*>(&difficulty), sizeof(difficulty));
     fin.read(reinterpret_cast<char*>(&elapsedTime), sizeof(elapsedTime));
     fin.read(reinterpret_cast<char*>(&leaderboardSave), sizeof(leaderboardSave));
     fin.read(reinterpret_cast<char*>(data), sizeof(data)*81);
@@ -535,7 +545,7 @@ int Sudoku::MultipleSolutions(int start) {
     return 1;
 }
 
-bool Sudoku::RemoveSquares() {
+bool Sudoku::RemoveSquares(Difficulty difficulty) {
     //Remove all possible squares while maintaining unique solution
     //To generate a minimal sudoku puzzle
 
@@ -544,7 +554,8 @@ bool Sudoku::RemoveSquares() {
     int attemptMax = 20; //number of attempts at backstepping before we give up and try a new puzzle
     //TODO optimize this number ^
     int successfulRemoves = 0;
-    int goalRemoves = 57; //TODO increase this as the AI improves
+    int goalRemoves = 50; //TODO increase this as the AI improves
+    goalRemoves += (int)difficulty * INCREASED_REMOVALS_PER_DIFFICULTY;
     std::vector<int> squares;
     for (int i = 0; i < 81; i++) squares.push_back(i);
     std::random_shuffle(squares.begin(), squares.end());
@@ -563,7 +574,8 @@ bool Sudoku::RemoveSquares() {
         data[i] = 0;
         //sudokuUser[mirror]=0;
 
-        if (!AISolve(data)){
+        Difficulty cDifficulty = Easy;
+        if (!AISolve(data, difficulty, cDifficulty)){
             data[i] = n;
            // sudokuUser[mirror] = o;
             attempts++;
@@ -571,7 +583,22 @@ bool Sudoku::RemoveSquares() {
         } else {
             successfulRemoves++;
             if (successfulRemoves == goalRemoves){
-                Log::Debug.Info("Puzzle completed | reversals on current solve: %d | total reversals: %d", attempts, totalAttempts);
+                if (cDifficulty != difficulty) //not the right difficulty (too easy)
+                    return false; //try again
+                
+                std::string s;
+                switch(cDifficulty){
+                    case Easy:
+                        s = "Easy";
+                        break;
+                    case Medium:
+                        s = "Medium";
+                        break;
+                    case Hard:
+                        s = "Hard";
+                        break;
+                }
+                Log::Debug.Info("%s puzzle completed | reversals on current solve: %d | total reversals: %d", s.c_str(), attempts, totalAttempts);
                 return true;
             }
             attempts = 0;
@@ -580,8 +607,9 @@ bool Sudoku::RemoveSquares() {
     return false;
 }
 
-void Sudoku::CreateSudoku() {
+void Sudoku::CreateSudoku(Difficulty difficulty) {
     // Create a random solved sudoku puzzle
+    this->difficulty = difficulty;
 
     int attempt = 0;
     do {   
@@ -591,7 +619,7 @@ void Sudoku::CreateSudoku() {
         Fill(0);
 
         for (int i = 0; i < 81; i++) data[i] = solved[i];
-    } while (!RemoveSquares());
+    } while (!RemoveSquares(difficulty));
 
     Log::Debug.Info("Puzzle selected, attempt #%d", attempt);
     for (int i = 0; i < 81; i++)

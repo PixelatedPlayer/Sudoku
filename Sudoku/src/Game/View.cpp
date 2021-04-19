@@ -52,7 +52,7 @@ bool View::Create() {
 
 void View::HandleInput(int key, keyState state){
     //if (!incomplete || (state.held && !state.pressed && !state.released)) return;
-    if (!incomplete || !state.pressed) return;
+    if (!incomplete) return;
     
     bool drawDebounce = false;
     
@@ -61,10 +61,16 @@ void View::HandleInput(int key, keyState state){
         xSel++;
         if (xSel > 8)
             xSel = 0;
-    } else if (controller.Begun() && boardSelection && (key == VK_LEFT || key == 'A') && state.pressed){
-        xSel--;
-        if (xSel < 0)
-            xSel = 8;
+    } else if ((key == VK_LEFT || key == 'A') && state.pressed){
+        if (!controller.Begun() && difficultySelection){
+            difficultySelection = false;
+            mSel = 1; //set back to selection at New Game
+        }
+        else if (boardSelection) {
+            xSel--;
+            if (xSel < 0)
+                xSel = 8;
+        }
     }
     if ((key == VK_DOWN || key == 'S') && state.pressed){
         if (!controller.Begun()){
@@ -108,10 +114,15 @@ void View::HandleInput(int key, keyState state){
     } 
     
     //ESCAPE: toggle menu
-    if (controller.Begun() && key == VK_ESCAPE && state.pressed){
-        boardSelection = !boardSelection;
-        hintToggle = false;
-        DrawGameMenu();
+    if (key == VK_ESCAPE && state.pressed){
+        if (!controller.Begun() && difficultySelection){
+            difficultySelection = false;
+            mSel = 1; //set back to selection at New Game
+        } else{
+            boardSelection = !boardSelection;
+            hintToggle = false;
+            DrawGameMenu();
+        }
     }
     
     //ENTER/SPACE: Enact selection
@@ -158,94 +169,105 @@ void View::HandleInput(int key, keyState state){
             }
             DrawGameMenu();
         } else{
-            switch (mSel){
-                case 0:
-                    controller.Load();
-                    Engine::Clear();
-                    DrawBorders();
-                    DrawGameMenu();
-                    break;
-                case 1:
-                    controller.NewGame();
-                    Engine::Clear();
-                    DrawBorders();
-                    DrawGameMenu();
-                    break;
-                case 2: {
-                    std::vector<Controller::ScoreboardNode> scoreboard = controller.LoadScoreboard();
-                    
-                    Frame frame(loadingMenu->GetWidth(), loadingMenu->GetHeight());
-                    frame.DrawBorder(' ', BG_WHITE);
-                    frame.DrawString(1, 1, "Difficulty");
-                    frame.DrawString(21, 1, "Time");
-                    for (int i = 0; i < scoreboard.size(); i++){
-                        frame.SetBit(1, 2+i, i+1+'0');
-                        frame.DrawString(2, 2+i, ". ");
-                        std::string s;
-                        switch(scoreboard[i].difficulty){
-                            case Controller::Easy:
-                                s = "Easy";
-                                break;
-                            case Controller::Medium:
-                                s = "Medium";
-                                break;
-                            case Controller::Hard:
-                                s = "Hard";
-                                break;
+            if (difficultySelection){
+                controller.NewGame((Difficulty)(mSel));
+                Clear();
+                DrawBorders();
+                DrawGameMenu();
+            }
+            else{
+                switch (mSel){
+                    case 0:
+                        controller.Load();
+                        Clear();
+                        DrawBorders();
+                        DrawGameMenu();
+                        break;
+                    case 1:
+                        difficultySelection = true;
+                        mSel = 0;
+                        break;
+                    case 2: {
+                        std::vector<Controller::ScoreboardNode> scoreboard = controller.LoadScoreboard();
+
+                        Frame frame(loadingMenu->GetWidth(), loadingMenu->GetHeight());
+                        frame.DrawBorder(' ', BG_WHITE);
+                        frame.DrawString(1,1, "SCOREBOARD (ESC to Exit)");
+                        frame.DrawString(1, 3, "#", BG_GRAY);
+                        frame.DrawString(4, 3, "DIFFICULTY", BG_GRAY);
+                        frame.DrawString(21, 3, "TIME", BG_GRAY);
+                        for (int i = 0; i < scoreboard.size(); i++){
+                            frame.SetBit(1, 4+i, i+1+'0');
+                            frame.DrawString(2, 4+i, ". ");
+                            std::string s;
+                            switch(scoreboard[i].difficulty){
+                                case Easy:
+                                    s = "Easy";
+                                    break;
+                                case Medium:
+                                    s = "Medium";
+                                    break;
+                                case Hard:
+                                    s = "Hard";
+                                    break;
+                            }
+
+                            frame.DrawString(4, 4+i, s);
+
+                            char b[9];
+                            snprintf(b, 9, "%.1f", scoreboard[i].time);
+                            frame.DrawString(21, 4+i, b);
                         }
-                        
-                        frame.DrawString(4, 2+i, s);
-                        
-                        char b[7];
-                        snprintf(b, 7, "%.1f", scoreboard[i].time);
-                        frame.DrawString(21, 2+i, b);
+                        DrawFrame(LOADING_MENU_X, LOADING_MENU_Y, &frame);
+                        drawDebounce = true;
                     }
-                    DrawFrame(LOADING_MENU_X, LOADING_MENU_Y, &frame);
-                    drawDebounce = true;
+                        break;
+                    case 3:
+                        exit(0);
+                        break;
                 }
-                    break;
-                case 3:
-                    exit(0);
-                    break;
             }
         }
     }
     
     //SHIFT: Show notes
-    if (controller.Begun() && state.pressed){
+    if (controller.Begun()){
         if (key == VK_SHIFT && state.pressed) {
             if (noteToggles) notesOn = !notesOn;
             else notesOn = true;
-        } else if (key == VK_SHIFT && state.released && !noteToggles)
+        } else if (key == VK_SHIFT && state.released && !noteToggles){
+            DrawBoard();
             notesOn = false;
+        }
 
-
-        //0-9: Set note or value
-        if (key >= '0' && key <= '9' && !controller.IsStarting(xSel, ySel)){ //we are modifying note
-            if (notesOn){
-                if (key == '0'){ //clear note
-                    for (int i = 0; i < 9; i++)
-                        controller.SetNote(xSel,ySel,i,false);
-                } else if (state.pressed)//toggle note
-                    controller.SetNote(xSel,ySel,key-'1', !controller.GetNote(xSel, ySel, key-'1'));
-            }
-            else{
-                if (key != '0'){
-                    std::vector<coord> obstructions = controller.MarkErrors(xSel, ySel,key-'0');
-                    for (int i = 0; i < obstructions.size(); i++){
-                        int tx = 2+obstructions[i].x*3+(obstructions[i].x/3);
-                        int ty = 2+obstructions[i].y*3+(obstructions[i].y/3);
-                        SetBit(tx, ty, GetBit(tx,ty).glyph, BG_RED + FG_BLACK);
-                    }
-                    if (obstructions.size() > 0) return;
+        if (state.pressed){
+            //0-9: Set note or value
+            if (key >= '0' && key <= '9' && !controller.IsStarting(xSel, ySel)){ //we are modifying note
+                if (notesOn){
+                    if (key == '0'){ //clear note
+                        for (int i = 0; i < 9; i++)
+                            controller.SetNote(xSel,ySel,i,false);
+                    } else if (state.pressed)//toggle note
+                        controller.SetNote(xSel,ySel,key-'1', !controller.GetNote(xSel, ySel, key-'1'));
                 }
-                if (controller.Get(xSel, ySel) == key - '0') //toggle if same key as value is pressed
-                    controller.Set(xSel, ySel, 0);
-                else
-                    controller.Set(xSel, ySel, (key=='0'||key==controller.Get(xSel,ySel)?0:key-'0'));
-                
-                if (controller.IsComplete())
-                    Victory();
+                else{
+                    if (key != '0'){
+                        std::vector<coord> obstructions = controller.MarkErrors(xSel, ySel,key-'0');
+                        for (int i = 0; i < obstructions.size(); i++){
+                            int tx = 2+obstructions[i].x*3+(obstructions[i].x/3);
+                            int ty = 2+obstructions[i].y*3+(obstructions[i].y/3);
+                            SetBit(tx, ty, GetBit(tx,ty).glyph, BG_RED + FG_BLACK);
+                        }
+                        if (obstructions.size() > 0) return;
+                    }
+                    if (controller.Get(xSel, ySel) == key - '0') //toggle if same key as value is pressed
+                        controller.Set(xSel, ySel, 0);
+                    else
+                        controller.Set(xSel, ySel, (key=='0'||key==controller.Get(xSel,ySel)?0:key-'0'));
+
+                    if (controller.IsComplete())
+                        Victory();
+                }
             }
         }
     }
@@ -254,14 +276,14 @@ void View::HandleInput(int key, keyState state){
         return;
     
     //DETERMINE DRAW - we do this in HandleInput instead of Update to save a lot of draw cycles (drawing to Console is pretty expensive, and we only need to change these drawings in reaction to user input
-    if (!controller.Begun()){
+    if (!controller.Begun() && state.pressed){
         DrawMenu();
         return;
     }
     
     if (notesOn){
         DrawNotes();
-    } else if (incomplete)
+    } else if (incomplete && state.pressed) //don't redraw unless new input
         DrawBoard();
     if (hintToggle)
         DrawHints(hint);
@@ -272,7 +294,7 @@ bool View::Update(float deltaTime){
         if (validateTimer > 0.0f) {
             validateTimer -= deltaTime;
             if (validateTimer <= 0.0f){ //reset affected render, since it won't otherwise change until an input
-                DrawBoard();
+                //DrawBoard();
                 DrawGameMenu();
             }
         }
@@ -298,7 +320,7 @@ void View::DrawBorders(){
 }
 
 void View::DrawBoard(){
-    Clear();
+    ClearBoard();
     for (int x = 0; x < 9; x++){
         for (int y = 0; y < 9; y++){
             SetBit(2+x*3+(x/3), 2+y*3+(y/3), (controller.Get(x,y) == 0?'_':controller.Get(x,y) + '0'), (x==xSel && y==ySel?BG_GRAY:BG_BLACK) + (controller.IsStarting(x,y)?FG_DARK_GRAY:FG_WHITE));
@@ -331,14 +353,22 @@ void View::DrawGameMenu(){
 }
 
 void View::DrawMenu(){
-    loadingMenu->DrawString(13, 11, "Continue", (controller.CanContinue() ? mSel == 0 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE : BG_BLACK + FG_GRAY), false);
-    loadingMenu->DrawString(13, 13, "New Game", (mSel == 1 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
-    loadingMenu->DrawString(13, 15, "Scoreboard", (mSel == 2 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
-    loadingMenu->DrawString(13, 17, "Exit Game", (mSel == 3 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
+    loadingMenu->DrawString(13, 11, "Continue", (controller.CanContinue() ? mSel == 0 && !difficultySelection ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE : BG_BLACK + FG_GRAY), false);
+    loadingMenu->DrawString(13, 13, "New Game", (mSel == 1 || difficultySelection ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
+    loadingMenu->DrawString(13, 15, "Scoreboard", (mSel == 2 && !difficultySelection ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
+    loadingMenu->DrawString(13, 17, "Exit Game", (mSel == 3 && !difficultySelection ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE), false);
+    
+    if (difficultySelection){
+        loadingMenu->DrawString(25, 11, "Easy", mSel == 0 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE, false);
+        loadingMenu->DrawString(25, 13, "Medium", mSel == 1 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE, false);
+        loadingMenu->DrawString(25, 15, "Hard", mSel == 2 ? BG_WHITE + FG_BLACK : BG_BLACK + FG_WHITE, false);
+    } else {
+        loadingMenu->Fill(25, 11, 31, 16, ' ');
+    }
     DrawFrame(LOADING_MENU_X, LOADING_MENU_Y, loadingMenu);
 }
 
-void View::Clear(){
+void View::ClearBoard(){
     //Fill in the board, between borders, with empty space (BG_BLACK ' ')
     for (int x = 0; x < 3; x++){
         for (int y = 0; y < 3; y++){
@@ -402,7 +432,7 @@ void View::Victory(){
     snprintf(s, 16, "%.0f seconds!", controller.GetTime());
     
     victory.DrawString(1, 2, s);
-    Engine::Clear();
+    Clear();
     DrawFrame(18, 5, &victory);
 }
 

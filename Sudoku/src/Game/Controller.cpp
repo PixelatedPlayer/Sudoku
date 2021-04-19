@@ -11,8 +11,8 @@ void Controller::Load(){
     begun = true;
 }
 
-void Controller::NewGame(){
-    puzzle.CreateSudoku();
+void Controller::NewGame(Difficulty difficulty){
+    puzzle.CreateSudoku(difficulty);
     begun = true;
 }
 
@@ -35,14 +35,13 @@ void Controller::Victory() {
     std::vector<ScoreboardNode> scoreboard = LoadScoreboard();
     int n = scoreboard.size();
 
-    //TODO don't default to Medium
     //now add to the scoreboard, via insertion sort
     for (int i = 0; i < n; i++){
         if (puzzle.GetTime() < scoreboard[i].time) //quicker than this one, insert before it
-            scoreboard.insert(scoreboard.begin()+i, ScoreboardNode(Medium, puzzle.GetTime()));
+            scoreboard.insert(scoreboard.begin()+i, ScoreboardNode(puzzle.GetDifficulty(), puzzle.GetTime()));
     }
     if (scoreboard.size() == n) //we didn't insert (it was worst time yet; or first entry)
-        scoreboard.push_back(ScoreboardNode(Medium, puzzle.GetTime()));
+        scoreboard.push_back(ScoreboardNode(puzzle.GetDifficulty(), puzzle.GetTime()));
     
     //now we re-write the scoreboard
     n+=1;

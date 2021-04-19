@@ -15,12 +15,6 @@ private:
 public:
     Controller();
     
-    enum Difficulty {
-        Easy,
-        Medium,
-        Hard
-    };
-    
     struct ScoreboardNode{
         ScoreboardNode() : difficulty(Medium), time(999999.99f) {}
         ScoreboardNode(Difficulty difficulty, float time) : difficulty(difficulty), time(time) {}
@@ -48,6 +42,6 @@ public:
     void SetNote(int x, int y, int z, bool v); //sets the note at the specified location
     
     void Load(); //loads the puzzle
-    void NewGame(); //generates a puzzle
+    void NewGame(Difficulty difficulty); //generates a puzzle
     void Victory(); //handle victory actions
 };
