@@ -65,7 +65,7 @@ void Log::DrawToFrame(Frame* frame, LOG_LEVEL lvl, int xOffset, int yOffset, boo
             //basic word wrap
             int index = 0;
             while (index < log[i].msg.length()){
-                while (length < frame->GetWidth() - xEndOffset){
+                while (index < log[i].msg.length() && length < frame->GetWidth() - xEndOffset){
                     out += log[i].msg[index++];
                     length++;
                 }

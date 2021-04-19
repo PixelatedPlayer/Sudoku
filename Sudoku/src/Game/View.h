@@ -20,6 +20,9 @@ private:
     Frame* loadingMenu; //visual frame to draw main menu with options for continue, new game and exit
     Sudoku::hint hint; //last requested hint, stored for display
     
+    const int LOADING_MENU_X = 18;
+    const int LOADING_MENU_Y = 5;
+    
     int xSel=0, ySel=0, mSel=0; //selection integers, xSel and ySel for the board and mSel for the menu
     bool incomplete = true;
     bool boardSelection = true; //if false we are in the menu
@@ -29,7 +32,9 @@ private:
     //USER SETTINGS
     bool checkerboard = true; //if true, draw a checkerboard for hints
     bool noteToggles = true; //if true, shift toggles notes; if false shift must be held
-    bool invertNotes = false; //not yet functional
+    
+    std::vector<coord> obstructions;
+    float validateTimer = 0.0f;
     
     //HELPER FUNCTIONS
     void DrawBoard(); //Draw the board and values

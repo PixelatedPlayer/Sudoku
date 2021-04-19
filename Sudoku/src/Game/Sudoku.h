@@ -8,6 +8,13 @@
 #include <ctime>
 #include "Engine/Log.h"
 
+/* TODO:
+ * Difficulty settings
+ * Save time to file
+ * Save saveToLeaderboard to file (in case they validate and reload)
+ * Save time records
+ */
+
 // COORDINATE DATA STRUCTURE
 struct coord{
     coord(int x, int y) : x(x), y(y) {}
@@ -30,22 +37,15 @@ enum house{
     block
 };
 
-/*
- TODO:
- * AISolve using RequestHint
- * Difficulty settings
- * Difficulty changes seed
- * More intelligent number removing
- * Optimize number removing (worst case takes about 2 minutes per square? VERY BAD but possibly unavoidable)
- */
-
 class Sudoku {
 private:
     //DATA
-    char sudokuSolved[81] = {}; // Complete sudoku with every square filled
-    char sudokuUser[81] = {}; // The sudoku the user sees, with the numbers in certain squares removed
-    bool sudokuStarting[81] = {};
+    char solved[81] = {}; // Complete sudoku with every square filled
+    char data[81] = {}; // The sudoku the user sees, with the numbers in certain squares removed
+    bool starting[81] = {};
     bool notes[81][9] = {}; // User entered notes
+    float elapsedTime = 0.0f;
+    bool leaderboardSave = true;
     
     //FUNCTIONS
     bool AISolve(char startingPuzzle[81]); //Solve the puzzle - used to ensure generated puzzles are solvable
@@ -67,25 +67,29 @@ public: // Should every variable and method be public? Probably not. Is that goi
     };
 
     // DATA INTERFACTING
-    int Get(int x, int y){ return sudokuUser[x+y*9]; }
+    int Get(int x, int y){ return data[x+y*9]; }
     int GetNote(int x, int y, int z){ return notes[x+y*9][z]; }
-    void Set(int x, int y, int v) { sudokuUser[x+y*9] = v; }
+    void Set(int x, int y, int v) { data[x+y*9] = v; }
     void SetNote(int x, int y, int z, bool v) { notes[x+y*9][z] = v; }
-    bool IsStarting(int x, int y){ return sudokuStarting[x + y * 9]; }
+    bool IsStarting(int x, int y){ return starting[x + y * 9]; }
     coord GetCoordFromHouseIndex(house house, int i, int j);
     bool IsComplete(char puzzle[81]);
-    bool IsComplete() { return IsComplete(sudokuUser); }
+    bool IsComplete() { return IsComplete(data); }
+    void IncrementTime(float deltaTime) { elapsedTime += deltaTime; }
+    float GetTime() { return elapsedTime; }
+    void SetLeaderboardSave(bool save) { leaderboardSave = save; }
     
     std::vector<coord> MarkErrors(int x, int y, int v);
+    std::vector<coord> IsValid();
     
     //AI FUNCTIONS
     //The big bad function for AI and hints
     static hint RequestHint(char puzzle[81], bool notes[81][9]);
     //Request hint from this puzzle
-    hint RequestHint(){ return RequestHint(sudokuUser, notes); }
+    hint RequestHint(){ return RequestHint(data, notes); }
     //Fill this puzzles notes
     static void FillNotes(char (&puzzle)[81], bool (&notes)[81][9]);
-    void FillNotes() { FillNotes(sudokuUser, notes); }
+    void FillNotes() { FillNotes(data, notes); }
     void ClearNotesInHouses(int x, int y, int v);
     
     // FILE FUNCTIONS

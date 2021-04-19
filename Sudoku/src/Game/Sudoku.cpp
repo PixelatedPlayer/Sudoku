@@ -111,12 +111,12 @@ std::vector<coord> Sudoku::MarkErrors(int x, int y, int v){
     std::vector<coord> obstructions;
     //Check rows
     for(int r=0; r<9;r++) {
-        if (r!=y&&sudokuUser[x+r*9]==v)
+        if (r!=y&&data[x+r*9]==v)
           obstructions.push_back(coord(x,r));
         }
     //Check columns
     for(int c=0;c<9;c++){
-        if(c!=x&&sudokuUser[c+y*9]==v)
+        if(c!=x&&data[c+y*9]==v)
           obstructions.push_back(coord(c,y));
     }
 
@@ -127,7 +127,7 @@ std::vector<coord> Sudoku::MarkErrors(int x, int y, int v){
         for (int yy = 0; yy < 3; yy++){
             int tx = startX+xx;
             int ty = startY+yy;
-            if ((tx!=x||ty!=y)&&sudokuUser[tx+ty*9]==v)
+            if ((tx!=x||ty!=y)&&data[tx+ty*9]==v)
                 obstructions.push_back(coord(tx,ty));
         }
     }
@@ -423,22 +423,14 @@ void Sudoku::FillNotes(char (&puzzle)[81], bool (&notes)[81][9]){
 }
 
 void Sudoku::Save(std::string fileName) {
-    std::ofstream fout(fileName, std::ofstream::binary);
+    std::ofstream fout(fileName, std::ofstream::binary | std::ofstream::out);
 
-    for (int i = 0; i < 81; i++){
-        fout << sudokuUser[i];
-    }
-    for (int i = 0; i < 81; i++) {
-        fout << sudokuSolved[i];
-    }
-    for (int i = 0; i < 81; i++){
-        fout << (char)sudokuStarting[i];
-    }
-    for (int i = 0; i < 81; i++){
-        for (int j = 0; j < 9; j++){
-            fout << (char)notes[i][j];
-        }
-    }
+    fout.write(reinterpret_cast<char*>(&elapsedTime), sizeof(elapsedTime));
+    fout.write(reinterpret_cast<char*>(&leaderboardSave), sizeof(leaderboardSave));
+    fout.write(reinterpret_cast<char*>(data), sizeof(data)*81);
+    fout.write(reinterpret_cast<char*>(solved), sizeof(solved)*81);
+    fout.write(reinterpret_cast<char*>(starting), sizeof(starting)*81);
+    fout.write(reinterpret_cast<char*>(notes),sizeof(notes)*81*9);
 
     fout.close();
 }
@@ -448,27 +440,13 @@ bool Sudoku::Load(std::string fileName) {
     std::ifstream fin(fileName, std::ifstream::binary);
     if (!fin || fin.eof())
         return false;
-
-    fin.read(sudokuUser, sizeof(sudokuUser));
-    fin.read(sudokuSolved, sizeof(sudokuSolved));
-    for (int i = 0; i < 81; i++){
-        char c;
-        fin >> c;
-        if (c == (char)(false))
-            sudokuStarting[i] = false;
-        else
-            sudokuStarting[i] = true;
-    }
-    for (int i = 0; i < 81; i++){
-        for (int j = 0; j < 9; j++){
-            char c;
-            fin >> c;
-            if (c == (char)(false))
-                notes[i][j] = false;
-            else
-                notes[i][j] = true;
-        }
-    }
+    
+    fin.read(reinterpret_cast<char*>(&elapsedTime), sizeof(elapsedTime));
+    fin.read(reinterpret_cast<char*>(&leaderboardSave), sizeof(leaderboardSave));
+    fin.read(reinterpret_cast<char*>(data), sizeof(data)*81);
+    fin.read(reinterpret_cast<char*>(solved), sizeof(solved)*81);
+    fin.read(reinterpret_cast<char*>(starting), sizeof(starting)*81);
+    fin.read(reinterpret_cast<char*>(notes),sizeof(notes)*81*9);
 
     fin.close();
     return true;
@@ -504,7 +482,7 @@ bool Sudoku::Fill(int start) {
     // Returns true iff all squares are successfully filled.
 
     for (int i = start; i < 81; i++) {
-        if (sudokuSolved[i] == 0) { // Check for empty squares
+        if (solved[i] == 0) { // Check for empty squares
             // Randomly shuffle a list of possible values and check each if they're possible
             std::vector<int> possibles;
             for (int j = 1; j < 10; j++) possibles.push_back(j);
@@ -512,8 +490,8 @@ bool Sudoku::Fill(int start) {
             //for (int j = 0; j < 9; j++) cout << possibles[j] << "\n";
             for (int j = 0; j < 9; j++) {
                 int n = possibles[j];
-                if (Possible(sudokuSolved, i, n)) {
-                    sudokuSolved[i] = n; // Naively fill in a random possible number
+                if (Possible(solved, i, n)) {
+                    solved[i] = n; // Naively fill in a random possible number
                     //cout << i % 9 << ", " << i / 9 << ": " << n << '\n';
                     if (Fill(start+1)) return true; // Fill in remaining squares recursively to find valid puzzle.
                     // TODO: in solveSudoku, you can set sudoku[i] to 0 right before 'return true' so that you don't modify the original sudoku
@@ -521,7 +499,7 @@ bool Sudoku::Fill(int start) {
             }
             // This square cannot be filled with a number, and the puzzle is therefore impossible to solve.
             // Erase work on the square and backtrack.
-            sudokuSolved[i] = 0;
+            solved[i] = 0;
             return false;
         }
     }
@@ -534,23 +512,23 @@ int Sudoku::MultipleSolutions(int start) {
 
     bool hasSolution = false;
     for (int i = 0; i < 81; i++) {
-        if (sudokuUser[i] == 0) {
+        if (data[i] == 0) {
             for (int n = 1; n <= 9; n++) {
-                if (Possible(sudokuUser, i, n)) {
-                    sudokuUser[i] = n; // Naively fill in a random possible number
+                if (Possible(data, i, n)) {
+                    data[i] = n; // Naively fill in a random possible number
                     int branchSols = MultipleSolutions(i+1);
                     if (branchSols > 1) {
-                        sudokuUser[i] = 0;
+                        data[i] = 0;
                         return 2;
                     }
                     if (branchSols == 1) { // See how many solutions exist in this branch
-                        sudokuUser[i] = 0;
+                        data[i] = 0;
                         if (hasSolution) return 2;
                         hasSolution = true;
                     }
                 }
             }
-            sudokuUser[i] = 0;
+            data[i] = 0;
             return 0;
         }
     }
@@ -562,39 +540,41 @@ bool Sudoku::RemoveSquares() {
     //To generate a minimal sudoku puzzle
 
     int totalAttempts = 0;
-    int attempts = 0; //number of
-    int attemptMax = 15; //number of attempts at backstepping before we give up and try a new puzzle
+    int attempts = 0; //number of attempts to backstep
+    int attemptMax = 20; //number of attempts at backstepping before we give up and try a new puzzle
     //TODO optimize this number ^
     int successfulRemoves = 0;
-    int goalRemoves = 60; //TODO increase this as the AI improves
+    int goalRemoves = 57; //TODO increase this as the AI improves
     std::vector<int> squares;
     for (int i = 0; i < 81; i++) squares.push_back(i);
     std::random_shuffle(squares.begin(), squares.end());
 
     int iteration = 0;
-    while (iteration < 81 && attempts < attemptMax) {
+    while (attempts < attemptMax) {
         int i = squares[iteration++];
+        if (iteration > 80)
+            iteration = 0;
         //int mirror = 80-i;
         // Remove the randomly selected square
-        int n = sudokuUser[i];
+        int n = data[i];
         //int o = sudokuUser[mirror];
         if (n == 0) //we already removed from here
             continue;
-        sudokuUser[i] = 0;
+        data[i] = 0;
         //sudokuUser[mirror]=0;
 
-        if (!AISolve(sudokuUser)){
-            sudokuUser[i] = n;
+        if (!AISolve(data)){
+            data[i] = n;
            // sudokuUser[mirror] = o;
             attempts++;
             totalAttempts++;
         } else {
-            attempts = 0;
             successfulRemoves++;
             if (successfulRemoves == goalRemoves){
-                Log::Debug.Info("Puzzle removal completed, total backsteps: %d", totalAttempts);
+                Log::Debug.Info("Puzzle completed | reversals on current solve: %d | total reversals: %d", attempts, totalAttempts);
                 return true;
             }
+            attempts = 0;
         }
     }
     return false;
@@ -606,14 +586,23 @@ void Sudoku::CreateSudoku() {
     int attempt = 0;
     do {   
         attempt ++;
-        for (int i = 0; i < 81; i++) sudokuSolved[i] = 0;
+        for (int i = 0; i < 81; i++) solved[i] = 0;
 
         Fill(0);
 
-        for (int i = 0; i < 81; i++) sudokuUser[i] = sudokuSolved[i];
+        for (int i = 0; i < 81; i++) data[i] = solved[i];
     } while (!RemoveSquares());
 
     Log::Debug.Info("Puzzle selected, attempt #%d", attempt);
     for (int i = 0; i < 81; i++)
-        sudokuStarting[i] = sudokuUser[i] != 0;
+        starting[i] = data[i] != 0;
+}
+
+std::vector<coord> Sudoku::IsValid(){
+    std::vector<coord> obstructions;
+    for (int i = 0; i < 81; i++){
+        if (data[i] != 0 && data[i] != solved[i])
+            obstructions.push_back(coord(GetXFromI(i), GetYFromI(i)));
+    }
+    return obstructions;
 }
