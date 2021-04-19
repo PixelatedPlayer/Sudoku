@@ -85,6 +85,7 @@ public: // Should every variable and method be public? Probably not. Is that goi
     void IncrementTime(float deltaTime) { elapsedTime += deltaTime; }
     float GetTime() { return elapsedTime; }
     void SetLeaderboardSave(bool save) { leaderboardSave = save; }
+    bool GetLeadboardSave() { return leaderboardSave; }
     Difficulty GetDifficulty() { return difficulty; }
     
     std::vector<coord> MarkErrors(int x, int y, int v);

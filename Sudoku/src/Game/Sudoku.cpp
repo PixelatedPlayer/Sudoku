@@ -371,8 +371,6 @@ Sudoku::hint Sudoku::RequestHint(char puzzle[81], bool notes[81][9]){
         }
     }
     
-    
-    
     return hint(); //return empty hit means we got nothing
 }
 

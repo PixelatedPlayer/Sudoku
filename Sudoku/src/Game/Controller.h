@@ -11,7 +11,6 @@ private:
     const char* scoreboardFileName = "Scoreboard.bin"; //save and load location for the Scoreboard
     float saveTimer = 0.0f; //we save every 1s
     
-    
 public:
     Controller();
     

@@ -31,6 +31,8 @@ void Controller::Victory() {
     //delete the save game (so we can't continue it from completion)
     std::remove(gameFileName);
     
+    if (!puzzle.GetLeadboardSave()) return; //we don't save to leaderboard
+    
     //load the scoreboard
     std::vector<ScoreboardNode> scoreboard = LoadScoreboard();
     int n = scoreboard.size();
