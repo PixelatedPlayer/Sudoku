@@ -8,21 +8,14 @@
 #include <ctime>
 #include "Engine/Log.h"
 
-/* TODO:
- * Difficulty settings
- * Save time to file
- * Save saveToLeaderboard to file (in case they validate and reload)
- * Save time records
- */
-
-// COORDINATE DATA STRUCTURE
+/** Coordinate data structure */
 struct coord{
     coord(int x, int y) : x(x), y(y) {}
     coord() : x(0), y(0) {}
     int x, y;
 };
 
-// HINT TYPES for ai and visual demonstration
+/** Hint Types */
 enum hintType{
     mark, //mark x,y with z
     pair, //remove hints y, z, from the house type at x, except for those who have only those two (i, j)
@@ -30,24 +23,27 @@ enum hintType{
     ERR
 };
 
-// INDICATION OF HOUSE (row, column, or block)
+/** House enum (row, column or block)*/
 enum house{
     row,
     col,
     block
 };
 
-//DIFFICULTY ENUM
+/** Difficultyt enum*/
 enum Difficulty {
     Easy,
     Medium,
     Hard
 };
 
+/**
+ * Sudoku Model class. Contains the data and generation logic for the sudoku puzzle.
+ */
 class Sudoku {
 private:
     //DATA
-    const int INCREASED_REMOVALS_PER_DIFFICULTY = 4;
+    const int INCREASED_REMOVALS_PER_DIFFICULTY = 4; /**< Number of additional removals per increased difficulty level*/
     
     char solved[81] = {}; // Complete sudoku with every square filled
     char data[81] = {}; // The sudoku the user sees, with the numbers in certain squares removed

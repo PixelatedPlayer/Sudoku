@@ -38,6 +38,7 @@ bool View::Create() {
     gameMenu->DrawString(0,4,"1-9 to write (0 clears)");
     gameMenu->DrawString(0,5,"SHIFT + 1-9 to edit notes");
     gameMenu->DrawString(0,6,"ESC to edit options");
+    gameMenu->DrawString(0, 7, "Press L to open debug");
     gameMenu->DrawString(0,9,"GAME OPTIONS");
     
     
@@ -87,7 +88,7 @@ void View::HandleInput(int key, keyState state){
             }
             else{
                 mSel++;
-                if (mSel > 4)
+                if (mSel > (showDebug ? 4 : 2))
                     mSel = 0;
                 DrawGameMenu();
             }
@@ -107,11 +108,19 @@ void View::HandleInput(int key, keyState state){
             } else{
                 mSel--;
                 if (mSel < 0)
-                    mSel = 4;
+                    mSel = (showDebug ? 4 : 2);
                 DrawGameMenu();
             }
         }
     } 
+    
+    //L: toggle debug
+    if (key == 'L' && state.pressed) {
+        showDebug = !showDebug;
+        if (!showDebug && mSel > 2)
+            mSel = 2;
+        DrawGameMenu();
+    }
     
     //ESCAPE: toggle menu
     if (key == VK_ESCAPE && state.pressed){
@@ -338,18 +347,24 @@ void View::DrawBoard(){
 }
 
 void View::DrawGameMenu(){
+    gameMenu->Fill(0, 14, 32, 40);
     gameMenu->DrawString(0,10,"Shift Toggle: ", (!boardSelection && mSel == 0 ? BG_GRAY + FG_BLACK : BG_BLACK + FG_WHITE), false);
     gameMenu->DrawString(0,11,"Checkerboard: ", (!boardSelection && mSel == 1 ? BG_GRAY + FG_BLACK : BG_BLACK + FG_WHITE), false);
     gameMenu->DrawString(0,12,"Validate (removes from leaderboard)", (validateTimer > 0.0f && obstructions.size() == 0 ? BG_GREEN + FG_BLACK : !boardSelection && mSel == 2 ? BG_GRAY + FG_BLACK : BG_BLACK + FG_WHITE), false);
-    gameMenu->DrawString(0,14, "Hint (cheat - Does not", (!boardSelection && mSel == 3 ? BG_GRAY + FG_BLACK : BG_BLACK + FG_WHITE), false);
-    gameMenu->DrawString(0,15, "validate your notes)", (!boardSelection && mSel == 3 ? BG_GRAY + FG_BLACK : BG_BLACK + FG_WHITE), false);
-    gameMenu->DrawString(0,16, "Fill notes (cheat)", (!boardSelection && mSel == 4 ? BG_GRAY + FG_BLACK : BG_BLACK + FG_WHITE), false);
     gameMenu->SetBit(15,10, noteToggles?'X':' ', BG_GRAY + FG_BLACK);
     gameMenu->SetBit(15,11, checkerboard?'X':' ', BG_GRAY + FG_BLACK);
+    
+    if (showDebug){
+        gameMenu->DrawString(0,14, "Hint (cheat - Does not", (!boardSelection && mSel == 3 ? BG_GRAY + FG_BLACK : BG_BLACK + FG_WHITE), false);
+        gameMenu->DrawString(0,15, "validate your notes)", (!boardSelection && mSel == 3 ? BG_GRAY + FG_BLACK : BG_BLACK + FG_WHITE), false);
+        gameMenu->DrawString(0,16, "Fill notes (cheat)", (!boardSelection && mSel == 4 ? BG_GRAY + FG_BLACK : BG_BLACK + FG_WHITE), false);
+    }
     DrawFrame(32, 0, gameMenu);
     
-    Log::Debug.DrawToFrame(debug, logINFO, 1, 1, false, 2);
-    DrawFrame(32, 18, debug);
+    if (showDebug){
+        Log::Debug.DrawToFrame(debug, logINFO, 1, 1, false, 2);
+        DrawFrame(32, 18, debug);
+    }
 }
 
 void View::DrawMenu(){

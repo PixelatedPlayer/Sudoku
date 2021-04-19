@@ -29,6 +29,7 @@ private:
     bool notesOn = false; //if true, display notes on board instead of values
     bool hintToggle = false; //if true, draw hint
     bool difficultySelection = false; //we are selecting the game difficulty
+    bool showDebug = false;
     
     //USER SETTINGS
     bool checkerboard = true; //if true, draw a checkerboard for hints
