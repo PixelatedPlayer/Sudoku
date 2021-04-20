@@ -127,7 +127,7 @@ void View::HandleInput(int key, keyState state){
         if (!controller.Begun() && difficultySelection){
             difficultySelection = false;
             mSel = 1; //set back to selection at New Game
-        } else{
+        } else if (controller.Begun()){
             boardSelection = !boardSelection;
             hintToggle = false;
             DrawGameMenu();
